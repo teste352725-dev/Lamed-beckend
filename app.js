@@ -20,6 +20,20 @@ try {
 const db = firebase.firestore();
 const auth = firebase.auth();
 
+// =======================================================
+// 🔥 STORAGE (PROJETO site-lamed)
+// =======================================================
+const storageApp = firebase.initializeApp({
+    apiKey: "AIzaSyCzB4_YotWCPVh1yaqWkhbB4LypPQYvV4U",
+    authDomain: "site-lamed.firebaseapp.com",
+    projectId: "site-lamed",
+    storageBucket: "site-lamed.firebasestorage.app",
+    messagingSenderId: "862756160215",
+    appId: "1:862756160215:web:d0fded233682bf93eaa692"
+}, "storageApp");
+
+const storage = firebase.storage(storageApp);
+
 // --- ESTADO GLOBAL ---
 let products = [];
 const storedCart = localStorage.getItem('lamedCart') || localStorage.getItem('ferrugemCart');
@@ -478,3 +492,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     updateCartUI();
 });
+
+
+// =======================================================
+// 📤 UPLOAD DE IMAGEM PARA FIREBASE STORAGE
+// =======================================================
+window.uploadImagemProduto = async function(file, produtoId) {
+    try {
+        const ref = storage.ref(`produtos/${produtoId}/${Date.now()}_${file.name}`);
+        const snap = await ref.put(file);
+        const url = await snap.ref.getDownloadURL();
+        return url;
+    } catch (err) {
+        console.error("Erro no upload:", err);
+        throw err;
+    }
+};
