@@ -31,20 +31,17 @@ window.isAdminUser = async (user) => {
 
   let claimMatch = false;
   try {
-    const token = await user.getIdTokenResult();
-    claimMatch = !!token?.claims?.admin;
+    const token = await user.getIdTokenResult(true);
+    claimMatch = !!(token?.claims?.admin || token?.claims?.isAdmin);
   } catch (_) {
     claimMatch = false;
   }
 
-  if (Array.isArray(window.ADMIN_UIDS) && window.ADMIN_UIDS.length > 0) {
-    return uidMatch || emailMatch || claimMatch;
-  }
-  return emailMatch || claimMatch;
+  return uidMatch || emailMatch || claimMatch;
 };
 
 window.requireAdmin = (opts = {}) => {
-  const { onAllowed, loginPath = 'login-admin.html', fallbackPath = 'index.html' } = opts;
+  const { onAllowed, loginPath = 'login-admin.html', fallbackPath = 'login-admin.html' } = opts;
 
   auth.onAuthStateChanged(async (user) => {
     if (!user) {
@@ -54,9 +51,9 @@ window.requireAdmin = (opts = {}) => {
 
     const allowed = await window.isAdminUser(user);
     if (!allowed) {
-      alert('Acesso restrito: usuário sem permissão de administrador.');
       auth.signOut().finally(() => {
-        window.location.href = fallbackPath;
+        const sep = fallbackPath.includes('?') ? '&' : '?';
+        window.location.href = `${fallbackPath}${sep}erro=sem-permissao-admin`;
       });
       return;
     }

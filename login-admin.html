@@ -51,6 +51,13 @@
     const error = document.getElementById('error');
     const btn = document.getElementById('submit-btn');
 
+
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('erro') === 'sem-permissao-admin') {
+      error.textContent = 'Sua conta autenticou, mas ainda não possui permissão de administrador (claim admin).';
+      error.classList.remove('hidden');
+    }
+
     auth.onAuthStateChanged(async (user) => {
       if (!user) return;
       const allowed = await isAdminUser(user);
