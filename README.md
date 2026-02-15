@@ -41,3 +41,19 @@ firebase deploy --only hosting
 - Busca, filtros por categoria, modal com galeria e carrinho persistente.
 - Checkout por WhatsApp com resumo automático do pedido.
 - Hosting configurado para servir o diretório raiz com URLs limpas.
+
+## Área Administrativa
+- `login-admin.html`: autenticação de administrador com Firebase Auth.
+- `dashboard.html`: visão geral com atalhos para módulos do painel.
+- Páginas conectadas ao dashboard e já protegidas por login:
+  - `produtos.html`
+  - `pedidos.html`
+  - `chat-admin.html`
+  - `galeria.html`
+  - `colecoes.html`
+  - `editor-imagem.html`
+  - `calcularvalordapeça.html`
+  - `executor_scripts.html`
+- `admin-common.js`: inicialização compartilhada do Firebase + proteção de rota admin.
+
+> Para restringir por UID específico, preencha o array `ADMIN_UIDS` em `admin-common.js`.

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard | Painel Administrativo - Seja Profeta</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Allura&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <style>
+    :root { --cor-marrom-cta:#643f21; --cor-ouro-acento:#A58A5C; }
+    body { font-family:'Inter',sans-serif; background:#f8fafc; }
+    .font-allura{font-family:'Allura',cursive}
+    .stat-card,.quick-action{background:#fff;border:1px solid #e2e8f0;border-radius:.75rem}
+    .stat-card{padding:1.25rem}
+    .quick-action{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1.5rem;text-align:center;height:100%;transition:.2s}
+    .quick-action:hover{border-color:var(--cor-ouro-acento);background:#fffbeb;transform:translateY(-2px)}
+    #mobile-menu{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #e2e8f0;display:flex;justify-content:space-around;padding:.75rem;z-index:50}
+    .menu-item{display:flex;flex-direction:column;align-items:center;color:#6b7280;font-size:.75rem;text-decoration:none}
+    .menu-item.active{color:var(--cor-marrom-cta);font-weight:600}
+  </style>
+</head>
+<body class="min-h-screen pb-20">
+  <header class="bg-white shadow-sm sticky top-0 z-40 px-4 py-3 flex justify-between items-center">
+    <div class="flex items-center gap-2">
+      <h1 class="font-allura text-3xl text-gray-800">Seja Profeta</h1>
+      <span class="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full font-medium">Admin</span>
+    </div>
+    <button id="logout-btn" class="text-gray-500 hover:text-red-600"><i class="fa-solid fa-arrow-right-from-bracket text-lg"></i></button>
+  </header>
+
+  <main class="max-w-7xl mx-auto p-4 space-y-6">
+    <div>
+      <h2 class="text-xl font-semibold text-gray-800">Visão Geral</h2>
+      <p class="text-gray-500 text-sm">Gestão da loja de velas e kits.</p>
+    </div>
+
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div class="stat-card"><p class="text-xs uppercase text-gray-500 font-bold">Pedidos</p><p id="total-pedidos" class="text-2xl font-bold">-</p></div>
+      <div class="stat-card"><p class="text-xs uppercase text-gray-500 font-bold">Receita</p><p id="receita-total" class="text-2xl font-bold">-</p></div>
+      <div class="stat-card"><p class="text-xs uppercase text-gray-500 font-bold">Produtos</p><p id="total-produtos" class="text-2xl font-bold">-</p></div>
+      <div class="stat-card"><p class="text-xs uppercase text-gray-500 font-bold">Coleções</p><p id="colecoes-ativas" class="text-2xl font-bold">-</p></div>
+    </div>
+
+    <div>
+      <h3 class="text-lg font-semibold text-gray-800 mb-3">Acesso Rápido</h3>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <a href="produtos.html" class="quick-action"><i class="fa-solid fa-candle-holder text-2xl text-[--cor-marrom-cta] mb-2"></i><span class="font-medium text-sm">Produtos</span></a>
+        <a href="pedidos.html" class="quick-action"><i class="fa-solid fa-box text-2xl text-[--cor-marrom-cta] mb-2"></i><span class="font-medium text-sm">Pedidos</span></a>
+        <a href="chat-admin.html" class="quick-action border-2 border-green-100 bg-green-50"><i class="fa-brands fa-whatsapp text-2xl text-green-600 mb-2"></i><span class="font-medium text-sm">Chat Clientes</span></a>
+        <a href="galeria.html" class="quick-action"><i class="fa-solid fa-images text-2xl text-[--cor-marrom-cta] mb-2"></i><span class="font-medium text-sm">Galeria</span></a>
+        <a href="colecoes.html" class="quick-action"><i class="fa-solid fa-layer-group text-2xl text-[--cor-marrom-cta] mb-2"></i><span class="font-medium text-sm">Coleções</span></a>
+        <a href="editor-imagem.html" class="quick-action"><i class="fa-solid fa-crop-simple text-2xl text-gray-500 mb-2"></i><span class="font-medium text-sm">Editor</span></a>
+        <a href="calcularvalordapeça.html" class="quick-action border-2 border-[--cor-ouro-acento] bg-[#fffbeb]"><i class="fa-solid fa-calculator text-2xl text-[--cor-marrom-cta] mb-2"></i><span class="font-medium text-sm">Calculadora</span></a>
+        <a href="executor_scripts.html" class="quick-action"><i class="fa-solid fa-terminal text-2xl text-gray-500 mb-2"></i><span class="font-medium text-sm">Scripts</span></a>
+      </div>
+    </div>
+  </main>
+
+  <nav id="mobile-menu" class="md:hidden">
+    <a href="dashboard.html" class="menu-item active"><i class="fa-solid fa-home"></i><span>Home</span></a>
+    <a href="pedidos.html" class="menu-item"><i class="fa-solid fa-box"></i><span>Pedidos</span></a>
+    <a href="produtos.html" class="menu-item"><i class="fa-solid fa-candle-holder"></i><span>Produtos</span></a>
+    <a href="chat-admin.html" class="menu-item"><i class="fa-solid fa-comments"></i><span>Chat</span></a>
+  </nav>
+
+  <script src="admin-common.js"></script>
+  <script>
+    requireAdmin({ onAllowed: () => carregarStats() });
+    document.getElementById('logout-btn').onclick = () => auth.signOut().then(() => window.location.href = 'login-admin.html');
+
+    async function carregarStats() {
+      db.collection('pedidos').get().then(snap => {
+        document.getElementById('total-pedidos').textContent = snap.size;
+        let total = 0;
+        snap.forEach(doc => total += Number(doc.data().total || 0));
+        document.getElementById('receita-total').textContent = new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(total);
+      }).catch(() => {});
+
+      db.collection('pecas').get().then(snap => {
+        document.getElementById('total-produtos').textContent = snap.size;
+      }).catch(() => {});
+
+      db.collection('colecoes').where('ativa', '==', true).get().then(snap => {
+        document.getElementById('colecoes-ativas').textContent = snap.size;
+      }).catch(() => {});
+    }
+  </script>
+</body>
+</html>
