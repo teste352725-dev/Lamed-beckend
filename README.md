@@ -56,4 +56,4 @@ firebase deploy --only hosting
   - `executor_scripts.html`
 - `admin-common.js`: inicialização compartilhada do Firebase + proteção de rota admin.
 
-> Para restringir por UID específico, preencha o array `ADMIN_UIDS` em `admin-common.js`.
+> Admin travado por UID em `admin-common.js` com: `kTV8LmdqVrZXxE1gYVYxMwFZj9G3`.

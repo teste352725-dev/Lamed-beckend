@@ -16,9 +16,9 @@ if (!firebase.apps.length) {
 window.auth = firebase.auth();
 window.db = firebase.firestore();
 
-// Se vazio, qualquer usuário autenticado entra no admin.
-// Para restringir por UID, preencha com os UIDs permitidos.
-window.ADMIN_UIDS = [];
+// UIDs autorizados no admin.
+// Para liberar mais administradores, adicione novos UIDs neste array.
+window.ADMIN_UIDS = ["kTV8LmdqVrZXxE1gYVYxMwFZj9G3"];
 
 window.isAdminUser = (user) => {
   if (!user) return false;
