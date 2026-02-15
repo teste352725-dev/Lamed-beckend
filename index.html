@@ -445,6 +445,12 @@
         });
 
         // Enter no search mantém aberto (filtra ao digitar) — o app.js liga o listener
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js').catch((err) => console.warn('SW falhou:', err));
+            });
+        }
     </script>
 </body>
 </html>
