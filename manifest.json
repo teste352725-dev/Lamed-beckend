@@ -1,0 +1,11 @@
+{
+  "name": "Seja Profeta | Atelier Ferrugem",
+  "short_name": "Seja Profeta",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#fdfcf9",
+  "theme_color": "#1a110a",
+  "description": "Loja oficial de velas artesanais e kits do Atelier Ferrugem.",
+  "lang": "pt-BR"
+}
