@@ -50,3 +50,45 @@ body {
 .color-option.selected { border-color: var(--cor-marrom-cta); background-color: #fffbeb; }
 #sidebar-menu nav::-webkit-scrollbar { width: 4px; }
 #sidebar-menu nav::-webkit-scrollbar-thumb { background-color: #E5E0D8; border-radius: 4px; }
+
+
+.header-glass {
+    background: rgba(253, 251, 246, 0.95);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid rgba(165, 138, 92, 0.1);
+}
+
+.btn-primary {
+    background-color: var(--cor-marrom-cta);
+    color: white;
+    padding: 12px 24px;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    font-size: 0.75rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    border-radius: 2px;
+}
+.btn-primary:hover {
+    background-color: #4a2e18;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(100, 63, 33, 0.2);
+}
+
+.product-card {
+    background: white;
+    border: 1px solid #eee;
+    transition: all 0.3s ease;
+}
+.product-card:hover {
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    border-color: var(--cor-ouro-acento);
+}
+
+.cart-drawer {
+    transform: translateX(100%);
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.cart-drawer.active {
+    transform: translateX(0);
+}
