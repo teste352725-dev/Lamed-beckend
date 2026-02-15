@@ -19,23 +19,41 @@ window.db = firebase.firestore();
 // UIDs autorizados no admin.
 // Para liberar mais administradores, adicione novos UIDs neste array.
 window.ADMIN_UIDS = ["kTV8LmdqVrZXxE1gYVYxMwFZj9G3", "fBCtrgljvnUZyMcoFrUi7MbvZu73"];
+window.ADMIN_EMAILS = [];
 
-window.isAdminUser = (user) => {
+window.isAdminUser = async (user) => {
   if (!user) return false;
-  if (!Array.isArray(window.ADMIN_UIDS) || window.ADMIN_UIDS.length === 0) return true;
-  return window.ADMIN_UIDS.includes(user.uid);
+
+  const uidMatch = Array.isArray(window.ADMIN_UIDS) && window.ADMIN_UIDS.includes(user.uid);
+  const email = (user.email || '').toLowerCase();
+  const emailMatch = Array.isArray(window.ADMIN_EMAILS)
+    && window.ADMIN_EMAILS.map(e => (e || '').toLowerCase()).includes(email);
+
+  let claimMatch = false;
+  try {
+    const token = await user.getIdTokenResult();
+    claimMatch = !!token?.claims?.admin;
+  } catch (_) {
+    claimMatch = false;
+  }
+
+  if (Array.isArray(window.ADMIN_UIDS) && window.ADMIN_UIDS.length > 0) {
+    return uidMatch || emailMatch || claimMatch;
+  }
+  return emailMatch || claimMatch;
 };
 
 window.requireAdmin = (opts = {}) => {
   const { onAllowed, loginPath = 'login-admin.html', fallbackPath = 'index.html' } = opts;
 
-  auth.onAuthStateChanged((user) => {
+  auth.onAuthStateChanged(async (user) => {
     if (!user) {
       window.location.href = loginPath;
       return;
     }
 
-    if (!window.isAdminUser(user)) {
+    const allowed = await window.isAdminUser(user);
+    if (!allowed) {
       alert('Acesso restrito: usuário sem permissão de administrador.');
       auth.signOut().finally(() => {
         window.location.href = fallbackPath;
