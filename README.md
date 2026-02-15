@@ -1,6 +1,6 @@
 # Lamed-beckend
 
-Loja estática da **Seja Profeta / Atelier Ferrugem** pronta para deploy no **Firebase Hosting**.
+Loja estática da **Seja Profeta** pronta para deploy no **Firebase Hosting**.
 
 ## Estrutura
 - `index.html`: página principal da loja.
