@@ -22,7 +22,8 @@ const auth = firebase.auth();
 
 // --- ESTADO GLOBAL ---
 let products = [];
-let cart = JSON.parse(localStorage.getItem('ferrugemCart')) || [];
+const storedCart = localStorage.getItem('lamedCart') || localStorage.getItem('ferrugemCart');
+let cart = storedCart ? JSON.parse(storedCart) : [];
 
 // Filtros
 let currentCategory = '__ALL__'; // '__ALL__' | 'Unicos' | 'Classicas' | 'Kits' ...
@@ -72,11 +73,46 @@ function getCatNormalized(cat) {
     return c;
 }
 
+
+function getProductCategory(p) {
+    return p?.categoria || p?.cat || '';
+}
+
+function getProductDescription(p) {
+    return p?.descricao || p?.desc || '';
+}
+
+function getProductImages(p) {
+    if (Array.isArray(p?.imagens) && p.imagens.length) return p.imagens;
+    if (Array.isArray(p?.img) && p.img.length) return p.img;
+    if (p?.img) return [p.img];
+    return [];
+}
+
+function normalizeProduct(raw) {
+    const categoria = getProductCategory(raw);
+    const imagens = getProductImages(raw);
+    const descricao = getProductDescription(raw);
+    return {
+        ...raw,
+        cat: categoria,
+        categoria,
+        img: imagens[0] || '',
+        imagens,
+        desc: descricao,
+        descricao,
+        preco: parsePrecoToNumber(raw?.preco),
+        status: raw?.status || 'active'
+    };
+}
+
 // --- CARREGAMENTO DE DADOS ---
 async function loadStoreData() {
     try {
         const snapshot = await db.collection('pecas').get();
-        products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        products = snapshot.docs
+            .map(doc => normalizeProduct({ id: doc.id, ...doc.data() }))
+            .filter(p => (p.status || 'active') === 'active');
 
         applyFiltersAndRender();
         updateCartUI();
@@ -141,14 +177,14 @@ function applyFiltersAndRender() {
     const filtered = products.filter(p => {
         // Categoria
         if (cat && cat !== '__ALL__') {
-            const pCat = getCatNormalized(p.cat);
+            const pCat = getCatNormalized(getProductCategory(p));
             const want = getCatNormalized(cat);
             if (pCat !== want) return false;
         }
 
         // Busca (nome/desc/cat)
         if (term.length > 0) {
-            const hay = normalizeText(`${p.nome || ''} ${p.desc || ''} ${p.cat || ''}`);
+            const hay = normalizeText(`${p.nome || ''} ${getProductDescription(p) || ''} ${getProductCategory(p) || ''}`);
             if (!hay.includes(term)) return false;
         }
 
@@ -180,13 +216,14 @@ function renderProducts(lista) {
 
     container.innerHTML = lista.map(p => {
         // imagens
-        const imgUrl = Array.isArray(p.img) ? p.img[0] : (p.img || 'https://placehold.co/400x500?text=Atelier');
+        const imgs = getProductImages(p);
+        const imgUrl = imgs[0] || 'https://placehold.co/400x500?text=Atelier';
 
         // preço
         const precoDisplay = formatarReal(p.preco);
 
         // tag única
-        const isUnico = getCatNormalized(p.cat) === 'unicos';
+        const isUnico = getCatNormalized(getProductCategory(p)) === 'unicos';
         const tagUnico = isUnico
             ? '<span class="absolute top-2 left-2 bg-[#1a110a] text-[#d4af37] text-[9px] px-2 py-1 uppercase tracking-widest z-10">Peça Única</span>'
             : '';
@@ -240,7 +277,7 @@ window._setModalImg = (url) => {
     // atualiza thumbs (borda ativa)
     const p = JSON.parse(localStorage.getItem('currentProduct') || 'null');
     if (!p) return;
-    const imgs = Array.isArray(p.img) ? p.img : [p.img].filter(Boolean);
+    const imgs = getProductImages(p);
     renderThumbs(imgs, url);
 };
 
@@ -254,7 +291,7 @@ window.openDetails = (id) => {
     const modal = document.getElementById('product-modal');
     if (!modal) return;
 
-    const imgs = Array.isArray(p.img) ? p.img.filter(Boolean) : [p.img].filter(Boolean);
+    const imgs = getProductImages(p);
     const first = imgs[0] || 'https://placehold.co/800x1000?text=Atelier';
 
     setModalImage(first);
@@ -262,7 +299,7 @@ window.openDetails = (id) => {
 
     document.getElementById('modal-title').innerText = p.nome || "Produto";
     document.getElementById('modal-price').innerText = formatarReal(p.preco);
-    document.getElementById('modal-desc').innerText = p.desc || "Vela artesanal aromática e Kasher.";
+    document.getElementById('modal-desc').innerText = getProductDescription(p) || "Produto artesanal selecionado para você.";
     document.getElementById('modal-add-btn').onclick = () => addToCart(p.id);
 
     modal.classList.remove('hidden');
@@ -275,7 +312,7 @@ window.addToCart = (id) => {
 
     const existing = cart.find(item => item.id === id);
 
-    const isUnico = getCatNormalized(product.cat) === 'unicos';
+    const isUnico = getCatNormalized(getProductCategory(product)) === 'unicos';
 
     if (existing) {
         // Se for peça única, não permite adicionar mais de 1
@@ -290,8 +327,9 @@ window.addToCart = (id) => {
             nome: product.nome || "Produto",
             // Guardar preço como número (robusto)
             precoNum: parsePrecoToNumber(product.preco),
-            img: Array.isArray(product.img) ? product.img[0] : product.img,
-            cat: product.cat || '',
+            img: getProductImages(product)[0] || '',
+            cat: getProductCategory(product) || '',
+            categoriaNorm: getCatNormalized(getProductCategory(product)),
             quantity: 1
         });
     }
@@ -311,7 +349,7 @@ window.changeQty = (index, delta) => {
     const item = cart[index];
     if (!item) return;
 
-    if (getCatNormalized(item.cat) === 'unicos' && delta > 0) return; // Trava quantidade de unicos
+    if ((item.categoriaNorm || getCatNormalized(item.cat)) === 'unicos' && delta > 0) return; // Trava quantidade de unicos
 
     item.quantity += delta;
     if (item.quantity <= 0) cart.splice(index, 1);
@@ -320,7 +358,8 @@ window.changeQty = (index, delta) => {
 };
 
 function saveCart() {
-    localStorage.setItem('ferrugemCart', JSON.stringify(cart));
+    localStorage.setItem('lamedCart', JSON.stringify(cart));
+    localStorage.setItem('ferrugemCart', JSON.stringify(cart)); // compat legado
 }
 
 function updateCartUI() {
@@ -391,7 +430,7 @@ window.checkoutWhatsApp = () => {
     msg += `\n💰 *Total Estimado: ${total}*\n`;
     msg += `\n_Gostaria de confirmar a disponibilidade e o frete._`;
 
-    const url = `https://wa.me/5527999287657?text=${encodeURIComponent(msg)}`;
+    const url = `https://wa.me/5527997310994?text=${encodeURIComponent(msg)}`;
     window.open(url, '_blank');
 };
 
