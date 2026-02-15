@@ -18,7 +18,7 @@ window.db = firebase.firestore();
 
 // UIDs autorizados no admin.
 // Para liberar mais administradores, adicione novos UIDs neste array.
-window.ADMIN_UIDS = ["kTV8LmdqVrZXxE1gYVYxMwFZj9G3"];
+window.ADMIN_UIDS = ["kTV8LmdqVrZXxE1gYVYxMwFZj9G3", "fBCtrgljvnUZyMcoFrUi7MbvZu73"];
 
 window.isAdminUser = (user) => {
   if (!user) return false;

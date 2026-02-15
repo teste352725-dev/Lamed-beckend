@@ -264,20 +264,10 @@
 
   <div id="toast" class="hidden fixed bottom-4 right-4 bg-gray-800 text-white px-4 py-3 rounded shadow-lg z-[70]"><span id="toast-message"></span></div>
 
+  <script src="admin-common.js"></script>
   <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyCzB4_YotWCPVh1yaqWkhbB4LypPQYvV4U",
-      authDomain: "site-lamed.firebaseapp.com",
-      databaseURL: "https://site-lamed-default-rtdb.firebaseio.com",
-      projectId: "site-lamed",
-      storageBucket: "site-lamed.firebasestorage.app",
-      messagingSenderId: "862756160215",
-      appId: "1:862756160215:web:d0fded233682bf93eaa692",
-      measurementId: "G-BL1G961PGT"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-    const auth = firebase.auth();
+    const db = window.db;
+    const auth = window.auth;
     const storage = firebase.storage();
 
     let produtos = [];
@@ -292,10 +282,7 @@
     };
 
     document.addEventListener('DOMContentLoaded', () => {
-      auth.onAuthStateChanged(user => {
-        if (!user) window.location.href = 'login-admin.html';
-        else { carregarColecoes(); carregarDados(); }
-      });
+      requireAdmin({ onAllowed: () => { carregarColecoes(); carregarDados(); } });
       document.querySelectorAll('.tab-button').forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
       document.getElementById('product-price').addEventListener('input', atualizarPreviewPreco);
       document.getElementById('product-discount').addEventListener('input', atualizarPreviewPreco);
