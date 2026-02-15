@@ -55,7 +55,7 @@
         <div class="script-item"><div class="flex items-center gap-3"><div class="script-icon bg-purple-100 text-purple-600"><i class="fa-solid fa-sync"></i></div><div><h3 class="font-medium text-gray-800">Sincronizar Contadores</h3><p class="text-xs text-gray-500">Recalcula total de produtos e coleções ativas.</p></div></div><button onclick="runScript('syncContadores')" class="btn btn-secondary text-xs">Executar</button></div>
         <div class="script-item"><div class="flex items-center gap-3"><div class="script-icon bg-green-100 text-green-600"><i class="fa-solid fa-tags"></i></div><div><h3 class="font-medium text-gray-800">Corrigir Preços Inválidos</h3><p class="text-xs text-gray-500">Define preço 0.00 para produtos com preço nulo/negativo.</p></div></div><button onclick="runScript('corrigirPrecos')" class="btn btn-secondary text-xs">Executar</button></div>
         <div class="script-item"><div class="flex items-center gap-3"><div class="script-icon bg-teal-100 text-teal-600"><i class="fa-solid fa-download"></i></div><div><h3 class="font-medium text-gray-800">Backup de Segurança</h3><p class="text-xs text-gray-500">Baixa JSON com produtos, coleções e pedidos.</p></div></div><button onclick="runScript('backupDados')" class="btn btn-secondary text-xs">Executar</button></div>
-        <div class="script-item"><div class="flex items-center gap-3"><div class="script-icon bg-amber-100 text-amber-700"><i class="fa-solid fa-shield-halved"></i></div><div><h3 class="font-medium text-gray-800">Diagnóstico de Permissões</h3><p class="text-xs text-gray-500">Valida claims do usuário e acesso de leitura/escrita por coleção.</p></div></div><button onclick="runScript('diagnosticoPermissoes')" class="btn btn-secondary text-xs">Executar</button></div>
+        <div class="script-item"><div class="flex items-center gap-3"><div class="script-icon bg-amber-100 text-amber-700"><i class="fa-solid fa-shield-halved"></i></div><div><h3 class="font-medium text-gray-800">Diagnóstico de Permissões</h3><p class="text-xs text-gray-500">Valida UID admin e acesso de leitura/escrita por coleção.</p></div></div><button onclick="runScript('diagnosticoPermissoes')" class="btn btn-secondary text-xs">Executar</button></div>
       </div>
 
       <div class="card border-red-200">
@@ -114,8 +114,8 @@
       const code = e?.code || '';
       const msg = e?.message || '';
       if (code === 'permission-denied' || /insufficient permissions/i.test(msg)) {
-        log('Permissão negada pelo Firestore Rules. Com as rules atuais, escrita só em /pecas com claim admin=true; /colecoes e /pedidos estão bloqueadas.', 'warning');
-        log('Se precisar cadastrar estrutura completa (coleções/pedidos), ajuste as rules para liberar escrita admin nessas coleções.', 'warning');
+        log('Permissão negada pelo Firestore Rules. Nessas regras novas, admin é por UID fixo (não por claim).', 'warning');
+        log('Regras atuais: leitura pública em pecas/colecoes/galeria; escrita nesses caminhos só para UIDs admin. pedidos permite create público e read por admin/dono.', 'warning');
       }
     }
 
@@ -194,17 +194,32 @@
               log('Usuário não autenticado.', 'error');
               break;
             }
-            const token = await user.getIdTokenResult(true);
-            const claims = token?.claims || {};
             log(`Usuário: ${user.email || '(sem email)'} | UID: ${user.uid}`, 'info');
-            log(`Claims: ${JSON.stringify(claims)}`, 'info');
-            log(`Claim admin: ${claims.admin === true ? 'true' : 'false'}`, claims.admin === true ? 'success' : 'warning');
+            const adminByUid = Array.isArray(window.ADMIN_UIDS) && window.ADMIN_UIDS.includes(user.uid);
+            log(`Admin por UID fixo: ${adminByUid ? 'true' : 'false'}`, adminByUid ? 'success' : 'warning');
 
-            for (const col of ['pecas', 'colecoes', 'pedidos']) {
+            for (const col of ['pecas', 'colecoes', 'galeria', 'pedidos', 'usuarios']) {
               const r = await testePermissaoColecao(col);
               const tipo = (r.leitura === 'ok' || r.escrita === 'ok') ? 'info' : 'warning';
               log(`${r.colecao}: leitura=${r.leitura} | escrita=${r.escrita}`, tipo);
             }
+
+            try {
+              const refPedido = db.collection('pedidos').doc(`__diag_pedido_${Date.now()}`);
+              await refPedido.set({
+                cliente: { nome: 'Diag', telefone: '00000000000' },
+                itens: [],
+                total: 0,
+                status: 'novo',
+                data: new Date(),
+                userId: user.uid
+              });
+              log('pedidos(create público): ok', 'success');
+              await refPedido.delete().catch(() => {});
+            } catch (err) {
+              log(`pedidos(create público): negado (${err.message})`, 'warning');
+            }
+
             log('Diagnóstico finalizado.', 'success');
             break;
           }

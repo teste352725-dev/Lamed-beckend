@@ -19,25 +19,9 @@ window.db = firebase.firestore();
 // UIDs autorizados no admin.
 // Para liberar mais administradores, adicione novos UIDs neste array.
 window.ADMIN_UIDS = ["kTV8LmdqVrZXxE1gYVYxMwFZj9G3", "fBCtrgljvnUZyMcoFrUi7MbvZu73"];
-window.ADMIN_EMAILS = [];
-
 window.isAdminUser = async (user) => {
   if (!user) return false;
-
-  const uidMatch = Array.isArray(window.ADMIN_UIDS) && window.ADMIN_UIDS.includes(user.uid);
-  const email = (user.email || '').toLowerCase();
-  const emailMatch = Array.isArray(window.ADMIN_EMAILS)
-    && window.ADMIN_EMAILS.map(e => (e || '').toLowerCase()).includes(email);
-
-  let claimMatch = false;
-  try {
-    const token = await user.getIdTokenResult(true);
-    claimMatch = !!(token?.claims?.admin || token?.claims?.isAdmin);
-  } catch (_) {
-    claimMatch = false;
-  }
-
-  return uidMatch || emailMatch || claimMatch;
+  return Array.isArray(window.ADMIN_UIDS) && window.ADMIN_UIDS.includes(user.uid);
 };
 
 window.requireAdmin = (opts = {}) => {
