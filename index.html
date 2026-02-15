@@ -31,19 +31,18 @@
 </head>
 <body class="antialiased">
 
-    <header class="header-glass fixed top-0 w-full h-[80px] z-50 flex items-center justify-between px-6 md:px-12 transition-all">
+    <header class="header-glass fixed top-0 w-full h-[80px] z-50 flex items-center justify-between px-4 md:px-12 transition-all">
         <div class="flex items-center gap-6">
-            <button id="menu-toggle" class="md:hidden text-2xl text-[--cor-cta]" type="button"><i class="fa-solid fa-bars"></i></button>
+            <button id="menu-toggle" class="md:hidden text-2xl text-[--cor-cta]" aria-label="Abrir menu" type="button"><i class="fa-solid fa-bars"></i></button>
             <nav class="hidden md:flex gap-8 text-sm uppercase tracking-widest text-[--cor-cta]">
-                <a href="#shop" onclick="filterCat('__ALL__')" class="hover:text-[--cor-ouro] transition">Loja</a>
-                <a href="#shop" onclick="filterCat('unicos')" class="hover:text-[--cor-ouro] transition">Peças Únicas</a>
+                <a href="#acervo" onclick="filterCat('__ALL__')" class="hover:text-[--cor-ouro] transition">Loja</a>
+                <a href="#acervo" onclick="filterCat('unicos')" class="hover:text-[--cor-ouro] transition">Peças Únicas</a>
                 <a href="#sobre" class="hover:text-[--cor-ouro] transition">O Atelier</a>
             </nav>
         </div>
 
-        <div class="absolute left-1/2 transform -translate-x-1/2 text-center cursor-pointer" onclick="window.scrollTo(0,0)">
-            <img src="https://i.supaimg.com/24744ff6-247c-4e17-9e94-6455c96da980/dc727847-25ce-4e3b-97a3-7c26bb9493df.jpg" alt="Logo Seja Profeta" class="w-12 h-12 mx-auto rounded-full border border-[--cor-ouro] object-cover mb-1">
-            <h1 class="font-serif italic text-3xl text-[--cor-cta] leading-none">Seja Profeta</h1>
+        <div class="absolute left-1/2 transform -translate-x-1/2 text-center cursor-pointer px-3" onclick="window.scrollTo({top:0, behavior:'smooth'})">
+            <h1 class="font-serif italic text-2xl md:text-3xl text-[--cor-cta] leading-none">Seja Profeta</h1>
             <span class="text-[9px] uppercase tracking-[4px] text-[--cor-ouro] block mt-1">Atelier Ferrugem</span>
         </div>
 
@@ -56,10 +55,14 @@
         </div>
     </header>
 
-    <div id="mobile-menu" class="fixed top-[80px] inset-x-0 bg-white shadow-md z-40 hidden">
-        <a href="#shop" onclick="filterCat('__ALL__');toggleMobileMenu(false)" class="block px-6 py-3 text-xs uppercase tracking-widest">Loja</a>
-        <a href="#shop" onclick="filterCat('unicos');toggleMobileMenu(false)" class="block px-6 py-3 text-xs uppercase tracking-widest">Peças Únicas</a>
-        <a href="#sobre" onclick="toggleMobileMenu(false)" class="block px-6 py-3 text-xs uppercase tracking-widest">O Atelier</a>
+    <div id="mobile-menu-overlay" class="fixed inset-0 bg-black/30 z-40 hidden"></div>
+    <div id="mobile-menu" class="fixed top-[80px] left-0 right-0 bg-white shadow-md z-50 hidden border-t border-[#E5E0D8]">
+        <div class="px-6 py-5 space-y-1">
+            <a href="#acervo" onclick="filterCat('__ALL__');toggleMobileMenu(false)" class="block px-3 py-3 text-xs uppercase tracking-widest rounded-md hover:bg-[#f9f5ee]">Loja</a>
+            <a href="#acervo" onclick="filterCat('unicos');toggleMobileMenu(false)" class="block px-3 py-3 text-xs uppercase tracking-widest rounded-md hover:bg-[#f9f5ee]">Peças Únicas</a>
+            <a href="#sobre" onclick="toggleMobileMenu(false)" class="block px-3 py-3 text-xs uppercase tracking-widest rounded-md hover:bg-[#f9f5ee]">O Atelier</a>
+            <a href="login-admin.html" onclick="toggleMobileMenu(false)" class="block px-3 py-3 text-xs uppercase tracking-widest rounded-md hover:bg-[#f9f5ee]">Minha Conta</a>
+        </div>
     </div>
 
     <main class="pt-[80px]">
@@ -71,7 +74,7 @@
                         <div class="absolute inset-0 bg-black/20 flex flex-col items-center justify-center text-center text-white p-4">
                             <span class="font-allura text-5xl md:text-7xl mb-2 opacity-90 drop-shadow-md">Luz Sagrada</span>
                             <h2 class="font-serif italic text-4xl md:text-6xl mb-8 tracking-wide drop-shadow-lg">Velas Aromáticas & Kasher</h2>
-                            <button onclick="document.getElementById('shop').scrollIntoView()" class="bg-white text-[--cor-cta] px-10 py-3 uppercase tracking-[3px] text-xs font-bold hover:bg-[--cor-ouro] hover:text-white transition" type="button">Ver Coleção</button>
+                            <button onclick="filterCat('__ALL__')" class="bg-white text-[--cor-cta] px-10 py-3 uppercase tracking-[3px] text-xs font-bold hover:bg-[--cor-ouro] hover:text-white transition" type="button">Ver Coleção</button>
                         </div>
                     </li>
                     <li class="splide__slide relative">
@@ -144,7 +147,7 @@
     <footer class="bg-white border-t border-[#E5E0D8] pt-20 pb-10 px-6">
         <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12 text-center md:text-left">
             <div class="md:col-span-1"><h4 class="font-serif italic text-2xl text-[--cor-cta] mb-4">Seja Profeta</h4><p class="text-xs text-gray-400 uppercase tracking-widest leading-loose">Vitória, ES<br>Brasil</p></div>
-            <div><h5 class="text-[10px] font-bold uppercase tracking-[3px] text-[--cor-ouro] mb-6">Menu</h5><ul class="space-y-4 text-xs text-[--cor-cta] uppercase tracking-wide"><li><a href="#" class="hover:text-[--cor-ouro]">Início</a></li><li><a href="#shop" class="hover:text-[--cor-ouro]">Loja</a></li><li><a href="#sobre" class="hover:text-[--cor-ouro]">Sobre</a></li></ul></div>
+            <div><h5 class="text-[10px] font-bold uppercase tracking-[3px] text-[--cor-ouro] mb-6">Menu</h5><ul class="space-y-4 text-xs text-[--cor-cta] uppercase tracking-wide"><li><a href="#" class="hover:text-[--cor-ouro]">Início</a></li><li><a href="#acervo" class="hover:text-[--cor-ouro]">Loja</a></li><li><a href="#sobre" class="hover:text-[--cor-ouro]">Sobre</a></li></ul></div>
             <div><h5 class="text-[10px] font-bold uppercase tracking-[3px] text-[--cor-ouro] mb-6">Ajuda</h5><ul class="space-y-4 text-xs text-[--cor-cta] uppercase tracking-wide"><li><a href="https://wa.me/5527997310994" class="hover:text-[--cor-ouro]">Fale Conosco</a></li><li><a href="#" class="hover:text-[--cor-ouro]">Prazos de Envio</a></li><li><a href="#" class="hover:text-[--cor-ouro]">Trocas</a></li></ul></div>
             <div><h5 class="text-[10px] font-bold uppercase tracking-[3px] text-[--cor-ouro] mb-6">Social</h5><div class="flex justify-center md:justify-start gap-6 text-xl text-[--cor-cta]"><a href="#" class="hover:text-[--cor-ouro]"><i class="fa-brands fa-instagram"></i></a><a href="https://wa.me/5527997310994" class="hover:text-[--cor-ouro]"><i class="fa-brands fa-whatsapp"></i></a></div></div>
         </div>
@@ -190,9 +193,15 @@
 
         function toggleMobileMenu(force) {
             const menu = document.getElementById('mobile-menu');
+            const overlay = document.getElementById('mobile-menu-overlay');
             const show = typeof force === 'boolean' ? force : menu.classList.contains('hidden');
             menu.classList.toggle('hidden', !show);
+            overlay.classList.toggle('hidden', !show);
+            const icon = document.querySelector('#menu-toggle i');
+            if (icon) icon.className = show ? 'fa-solid fa-xmark' : 'fa-solid fa-bars';
         }
+
+        document.getElementById('mobile-menu-overlay').addEventListener('click', () => toggleMobileMenu(false));
 
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('/sw.js').catch((err) => console.log('Falha SW:', err));

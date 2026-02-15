@@ -51,10 +51,10 @@
   <main class="max-w-7xl mx-auto p-4">
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
       <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100 text-center"><span class="block text-2xl font-bold text-[--cor-marrom-cta]" id="total-collections">0</span><span class="text-xs text-gray-500">Total</span></div>
-      <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100 text-center"><span class="block text-2xl font-bold text-green-600" id="active-collections">0</span><span class="text-xs text-gray-500">Ativas (Max 2)</span></div>
+      <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100 text-center"><span class="block text-2xl font-bold text-green-600" id="active-collections">0</span><span class="text-xs text-gray-500">Ativas no momento</span></div>
     </div>
 
-    <div id="active-section" class="mb-8 hidden">
+    <div id="active-section" class="mb-8">
       <h2 class="text-lg font-semibold text-gray-800 mb-4 flex items-center"><i class="fa-solid fa-star text-yellow-500 mr-2"></i> Ativas no Site</h2>
       <div id="active-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
     </div>
@@ -151,10 +151,9 @@
       }
 
       if (ativas.length > 0) {
-        document.getElementById('active-section').classList.remove('hidden');
         ativas.forEach(c => activeGrid.appendChild(criarCard(c)));
       } else {
-        document.getElementById('active-section').classList.add('hidden');
+        activeGrid.innerHTML = '<div class="col-span-full bg-white border border-dashed border-gray-300 rounded-lg p-6 text-center text-sm text-gray-500">Nenhuma coleção ativa no momento.</div>';
       }
 
       const sortType = document.getElementById('sort-select').value;
@@ -186,10 +185,6 @@
 
     async function toggleStatus(colecao) {
       const novoStatus = !colecao.ativa;
-      if (novoStatus && colecoes.filter(c => c.ativa).length >= 2) {
-        alert('Limite atingido! Máximo de 2 coleções ativas.');
-        return;
-      }
       try {
         await db.collection('colecoes').doc(colecao.id).update({ ativa: novoStatus, updatedAt: new Date() });
       } catch (e) { alert(`Erro ao atualizar: ${e.message}`); }
