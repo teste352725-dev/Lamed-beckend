@@ -145,7 +145,7 @@ async function loadStoreData() {
     try {
         const [prodSnap, colSnap] = await Promise.all([
             db.collection('pecas').get(),
-            db.collection('colecoes').where('ativa', '==', true).orderBy('ordem', 'asc').get()
+            db.collection('colecoes').orderBy('ordem', 'asc').get()
         ]);
 
         products = prodSnap.docs
@@ -153,8 +153,14 @@ async function loadStoreData() {
             .filter(p => (p.status || 'active') === 'active');
 
         collections = colSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        renderCollectionsSection(collections);
-        renderCategoryButtons(collections);
+
+        // Prioriza coleções ativas. Se nenhuma estiver ativa, exibe todas
+        // para evitar vitrine vazia no index.
+        const activeCollections = collections.filter(c => c.ativa === true);
+        const showcaseCollections = activeCollections.length > 0 ? activeCollections : collections;
+
+        renderCollectionsSection(showcaseCollections);
+        renderCategoryButtons(showcaseCollections);
 
         applyFiltersAndRender();
         updateCartUI();
