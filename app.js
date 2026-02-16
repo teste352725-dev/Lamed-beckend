@@ -39,7 +39,19 @@ try {
 
 const storage = firebase.storage(storageApp);
 const storageRoot = storage.refFromURL('gs://site-lamed.firebasestorage.app');
+const storageAuth = firebase.auth(storageApp);
+storageAuth.onAuthStateChanged(async (user) => {
+    if (!user) {
+        try { await storageAuth.signInAnonymously(); }
+        catch (err) { console.error('[StorageAuth] Falha no login anônimo:', err); }
+    }
+});
 console.info('[Storage] bucket em uso:', storage.app.options.storageBucket);
+
+async function ensureStorageAuth() {
+    if (storageAuth.currentUser) return;
+    await storageAuth.signInAnonymously();
+}
 
 // --- ESTADO GLOBAL ---
 let products = [];
@@ -555,6 +567,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // =======================================================
 window.uploadImagemProduto = async function(file, produtoId) {
     try {
+        await ensureStorageAuth();
         const ref = storageRoot.child(`produtos/${produtoId}/${Date.now()}_${file.name}`);
         const snap = await ref.put(file);
         const url = await snap.ref.getDownloadURL();

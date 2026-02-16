@@ -58,7 +58,19 @@
     }
     const storage = firebase.storage(storageApp);
     const storageRoot = storage.refFromURL('gs://site-lamed.firebasestorage.app');
+const storageAuth = firebase.auth(storageApp);
+storageAuth.onAuthStateChanged(async (user) => {
+      if (!user) {
+        try { await storageAuth.signInAnonymously(); }
+        catch (err) { console.error('[StorageAuth] Falha no login anônimo:', err); }
+      }
+    });
     console.info('[Storage] bucket em uso:', storage.app.options.storageBucket);
+
+    async function ensureStorageAuth() {
+      if (storageAuth.currentUser) return;
+      await storageAuth.signInAnonymously();
+    }
 
     document.addEventListener('DOMContentLoaded', () => {
       requireAdmin({ onAllowed: () => carregarGaleria() });
@@ -87,6 +99,7 @@
       for (const file of files) {
         status.textContent = `Enviando ${file.name}...`;
         const path = `galeria/${Date.now()}_${file.name}`;
+        await ensureStorageAuth();
         const ref = storageRoot.child(path);
         await ref.put(file);
         const url = await ref.getDownloadURL();
@@ -99,7 +112,10 @@
 
     window.deletar = async (id, path) => {
       if (!confirm('Apagar imagem?')) return;
-      if (path) await storageRoot.child(path).delete().catch(console.error);
+      if (path) {
+        await ensureStorageAuth();
+        await storageRoot.child(path).delete().catch(console.error);
+      }
       await db.collection('galeria').doc(id).delete();
     };
   </script>

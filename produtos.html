@@ -283,7 +283,19 @@
     }
     const storage = firebase.storage(storageApp);
     const storageRoot = storage.refFromURL('gs://site-lamed.firebasestorage.app');
+const storageAuth = firebase.auth(storageApp);
+storageAuth.onAuthStateChanged(async (user) => {
+      if (!user) {
+        try { await storageAuth.signInAnonymously(); }
+        catch (err) { console.error('[StorageAuth] Falha no login anônimo:', err); }
+      }
+    });
     console.info('[Storage] bucket em uso:', storage.app.options.storageBucket);
+
+    async function ensureStorageAuth() {
+      if (storageAuth.currentUser) return;
+      await storageAuth.signInAnonymously();
+    }
 
     let produtos = [];
     let selectedProductImages = [];
@@ -566,6 +578,7 @@
       btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Enviando...';
       btn.disabled = true;
       try {
+        await ensureStorageAuth();
         const ref = storageRoot.child(`produtos/${Date.now()}_${file.name}`);
         await ref.put(file);
         selectedProductImages.push(await ref.getDownloadURL());
