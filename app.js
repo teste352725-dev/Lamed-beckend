@@ -23,14 +23,19 @@ const auth = firebase.auth();
 // =======================================================
 // 🔥 STORAGE (PROJETO site-lamed)
 // =======================================================
-const storageApp = firebase.initializeApp({
-    apiKey: "AIzaSyCzB4_YotWCPVh1yaqWkhbB4LypPQYvV4U",
-    authDomain: "site-lamed.firebaseapp.com",
-    projectId: "site-lamed",
-    storageBucket: "site-lamed.firebasestorage.app",
-    messagingSenderId: "862756160215",
-    appId: "1:862756160215:web:d0fded233682bf93eaa692"
-}, "storageApp");
+let storageApp;
+try {
+    storageApp = firebase.app('siteLamedStorageAppV2');
+} catch (_) {
+    storageApp = firebase.initializeApp({
+        apiKey: "AIzaSyCzB4_YotWCPVh1yaqWkhbB4LypPQYvV4U",
+        authDomain: "site-lamed.firebaseapp.com",
+        projectId: "site-lamed",
+        storageBucket: "site-lamed.firebasestorage.app",
+        messagingSenderId: "862756160215",
+        appId: "1:862756160215:web:d0fded233682bf93eaa692"
+    }, 'siteLamedStorageAppV2');
+}
 
 const storage = firebase.storage(storageApp);
 
