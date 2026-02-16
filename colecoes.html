@@ -10,6 +10,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
   <style>
     :root { --cor-marrom-cta: #643f21; --cor-ouro-acento: #A58A5C; }
     body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
@@ -99,7 +100,12 @@
 
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Imagem Capa (URL)</label>
-          <input type="url" id="collection-image" class="w-full border rounded-lg p-3 mb-2">
+          <div class="flex flex-col sm:flex-row gap-2 mb-2">
+            <input type="url" id="collection-image" class="w-full border rounded-lg p-3" placeholder="https://...">
+            <button type="button" id="upload-collection-image-btn" class="btn btn-secondary whitespace-nowrap"><i class="fa-solid fa-upload mr-2"></i>Upload</button>
+          </div>
+          <input type="file" id="collection-image-file" accept="image/*" class="hidden">
+          <p id="upload-status" class="text-xs text-gray-500 mb-2 hidden"></p>
           <img id="preview-image" src="" class="w-full h-32 object-cover rounded-lg hidden bg-gray-100">
         </div>
 
@@ -115,6 +121,17 @@
   <script>
     const db = window.db;
     const auth = window.auth;
+
+    const storageApp = firebase.apps.find(a => a.name === 'storageCollectionsApp') || firebase.initializeApp({
+      apiKey: "AIzaSyCzB4_YotWCPVh1yaqWkhbB4LypPQYvV4U",
+      authDomain: "site-lamed.firebaseapp.com",
+      projectId: "site-lamed",
+      storageBucket: "site-lamed.firebasestorage.app",
+      messagingSenderId: "862756160215",
+      appId: "1:862756160215:web:d0fded233682bf93eaa692"
+    }, 'storageCollectionsApp');
+    const storage = firebase.storage(storageApp);
+
     let colecoes = [];
     let currentCollectionId = null;
 
@@ -258,6 +275,29 @@
       } catch { alert('Erro ao excluir.'); }
     }
 
+    async function uploadCollectionImage(file) {
+      if (!file) return;
+      const status = document.getElementById('upload-status');
+      const slug = (document.getElementById('collection-slug').value || 'sem-slug').trim();
+      const safeSlug = slug.replace(/[^a-zA-Z0-9_-]/g, '-').toLowerCase();
+      const path = `colecoes/${safeSlug}/${Date.now()}_${file.name}`;
+
+      try {
+        status.textContent = 'Enviando imagem...';
+        status.classList.remove('hidden');
+        const ref = storage.ref().child(path);
+        await ref.put(file);
+        const url = await ref.getDownloadURL();
+        document.getElementById('collection-image').value = url;
+        const img = document.getElementById('preview-image');
+        img.src = url;
+        img.classList.remove('hidden');
+        status.textContent = 'Upload concluído com sucesso.';
+      } catch (error) {
+        status.textContent = `Erro no upload: ${error.message}`;
+      }
+    }
+
     function setupEventListeners() {
       document.getElementById('add-collection-btn').onclick = () => abrirModal();
       document.getElementById('close-modal').onclick = () => document.getElementById('collection-modal').classList.remove('visivel');
@@ -271,6 +311,12 @@
         const img = document.getElementById('preview-image');
         if (e.target.value) { img.src = e.target.value; img.classList.remove('hidden'); }
         else img.classList.add('hidden');
+      };
+      document.getElementById('upload-collection-image-btn').onclick = () => document.getElementById('collection-image-file').click();
+      document.getElementById('collection-image-file').onchange = async (e) => {
+        const [file] = e.target.files || [];
+        if (file) await uploadCollectionImage(file);
+        e.target.value = '';
       };
       document.getElementById('collection-modal').addEventListener('click', (e) => {
         if (e.target.id === 'collection-modal') e.currentTarget.classList.remove('visivel');
