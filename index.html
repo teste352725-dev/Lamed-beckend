@@ -96,20 +96,7 @@
                     <span class="font-allura text-3xl text-[--cor-ouro]">Categorias</span>
                     <h2 class="font-serif italic text-4xl text-[--cor-cta]">Nossas Coleções</h2>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <div class="relative group cursor-pointer overflow-hidden aspect-[4/5]" onclick="filterCat('unicos')">
-                        <img src="https://static-media.hotmart.com/NDsO2-M7EjYosWIUl7obsptMxdI%3D/filters%3Aquality%281%29%3Aformat%28webp%29/klickart-prod/uploads/media/file/10104326/photo_2025-11-24_21-51-02.jpg" class="w-full h-full object-cover transition duration-700 group-hover:scale-110" alt="Unicos">
-                        <div class="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition duration-500"><span class="text-white font-serif text-3xl italic">Peças Únicas</span></div>
-                    </div>
-                    <div class="relative group cursor-pointer overflow-hidden aspect-[4/5]" onclick="filterCat('classicas')">
-                        <img src="https://static-media.hotmart.com/SFxmmpy_pIL5hN_opHFjcwAwmT0%3D/filters%3Aquality%281%29%3Aformat%28webp%29/klickart-prod/uploads/media/file/10043561/photo_2025-11-07_12-16-37.jpg" class="w-full h-full object-cover transition duration-700 group-hover:scale-110" alt="Classicas">
-                        <div class="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition duration-500"><span class="text-white font-serif text-3xl italic">Linha Permanente</span></div>
-                    </div>
-                    <div class="relative group cursor-pointer overflow-hidden aspect-[4/5]" onclick="filterCat('kits')">
-                        <img src="https://static-media.hotmart.com/_coMVaGIuAE0hC8SNzISElqSOLA%3D/filters%3Aquality%281%29%3Aformat%28webp%29/klickart-prod/uploads/media/file/10104322/photo_2025-11-24_21-51-25.jpg" class="w-full h-full object-cover transition duration-700 group-hover:scale-110" alt="Kits">
-                        <div class="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition duration-500"><span class="text-white font-serif text-3xl italic">Kits Presente</span></div>
-                    </div>
-                </div>
+                <div id="collections-grid" class="grid grid-cols-1 md:grid-cols-3 gap-8"></div>
             </div>
         </section>
 
@@ -119,11 +106,8 @@
                     <h2 class="font-serif italic text-4xl text-[--cor-cta]">Acervo Completo</h2>
                     <p class="text-xs uppercase tracking-widest text-gray-400 mt-2">Design Olfativo & Arte Sacra</p>
                 </div>
-                <div class="flex gap-4 mt-6 md:mt-0">
+                <div id="category-buttons" class="flex gap-4 mt-6 md:mt-0">
                     <button onclick="filterCat('__ALL__')" class="cat-btn text-xs uppercase tracking-widest text-[--cor-cta] hover:text-[--cor-ouro]" data-cat="__ALL__" type="button"><div>Todos</div></button>
-                    <button onclick="filterCat('unicos')" class="cat-btn text-xs uppercase tracking-widest text-gray-400 hover:text-[--cor-ouro]" data-cat="unicos" type="button"><div>Únicos</div></button>
-                    <button onclick="filterCat('classicas')" class="cat-btn text-xs uppercase tracking-widest text-gray-400 hover:text-[--cor-ouro]" data-cat="classicas" type="button"><div>Clássicos</div></button>
-                    <button onclick="filterCat('kits')" class="cat-btn text-xs uppercase tracking-widest text-gray-400 hover:text-[--cor-ouro]" data-cat="kits" type="button"><div>Kits</div></button>
                 </div>
             </div>
             <div class="hidden"><span id="filter-pill-text"></span></div>

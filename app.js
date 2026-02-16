@@ -36,6 +36,7 @@ const storage = firebase.storage(storageApp);
 
 // --- ESTADO GLOBAL ---
 let products = [];
+let collections = [];
 const storedCart = localStorage.getItem('lamedCart') || localStorage.getItem('ferrugemCart');
 let cart = storedCart ? JSON.parse(storedCart) : [];
 
@@ -123,21 +124,69 @@ function normalizeProduct(raw) {
 // --- CARREGAMENTO DE DADOS ---
 async function loadStoreData() {
     try {
-        const snapshot = await db.collection('pecas').get();
-        products = snapshot.docs
+        const [prodSnap, colSnap] = await Promise.all([
+            db.collection('pecas').get(),
+            db.collection('colecoes').where('ativa', '==', true).orderBy('ordem', 'asc').get()
+        ]);
+
+        products = prodSnap.docs
             .map(doc => normalizeProduct({ id: doc.id, ...doc.data() }))
             .filter(p => (p.status || 'active') === 'active');
+
+        collections = colSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        renderCollectionsSection(collections);
+        renderCategoryButtons(collections);
 
         applyFiltersAndRender();
         updateCartUI();
 
-        // Remove tela de loading se existir
         const loading = document.getElementById('loading-screen');
         if (loading) loading.style.display = 'none';
 
     } catch (error) {
         console.error("Erro ao carregar loja:", error);
     }
+}
+
+function renderCollectionsSection(lista) {
+    const grid = document.getElementById('collections-grid');
+    if (!grid) return;
+
+    if (!Array.isArray(lista) || lista.length === 0) {
+        grid.innerHTML = '<p class="text-center text-gray-400 col-span-full">Nenhuma coleção ativa no momento.</p>';
+        return;
+    }
+
+    grid.innerHTML = lista.map((c) => {
+        const slug = getCatNormalized(c.slug || c.nome || '');
+        const nome = c.nome || 'Coleção';
+        const img = c.imagemDestaque || 'https://placehold.co/800x1000?text=Colecao';
+        return `
+            <div class="relative group cursor-pointer overflow-hidden aspect-[4/5]" onclick="filterCat('${slug.replace(/'/g, "\'")}')">
+                <img src="${img}" class="w-full h-full object-cover transition duration-700 group-hover:scale-110" alt="${nome}">
+                <div class="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition duration-500"><span class="text-white font-serif text-3xl italic">${nome}</span></div>
+            </div>
+        `;
+    }).join('');
+}
+
+function renderCategoryButtons(lista) {
+    const wrap = document.getElementById('category-buttons');
+    if (!wrap) return;
+
+    const firstBtn = `<button onclick="filterCat('__ALL__')" class="cat-btn text-xs uppercase tracking-widest text-[--cor-cta] hover:text-[--cor-ouro]" data-cat="__ALL__" type="button"><div>Todos</div></button>`;
+    if (!Array.isArray(lista) || lista.length === 0) {
+        wrap.innerHTML = firstBtn;
+        return;
+    }
+
+    const others = lista.map((c) => {
+        const slug = getCatNormalized(c.slug || c.nome || '');
+        const nome = c.nome || slug;
+        return `<button onclick="filterCat('${slug.replace(/'/g, "\'")}')" class="cat-btn text-xs uppercase tracking-widest text-gray-400 hover:text-[--cor-ouro]" data-cat="${slug}"><div>${nome}</div></button>`;
+    }).join('');
+
+    wrap.innerHTML = firstBtn + others;
 }
 
 // --- FILTRO + SEARCH ---
