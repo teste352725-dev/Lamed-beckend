@@ -516,16 +516,18 @@ window.checkoutWhatsApp = () => {
     window.open(url, '_blank');
 };
 
-// --- UI HELPERS (CORRIGIDO: usa .active como no CSS) ---
+// --- UI HELPERS (usa .open para compat com seletor #cart-drawer.open) ---
 window.toggleCart = (show) => {
     const drawer = document.getElementById('cart-drawer');
     const overlay = document.getElementById('cart-overlay');
     if (!drawer || !overlay) return;
 
     if (show) {
+        drawer.classList.add('open');
         drawer.classList.add('active');
         overlay.classList.remove('hidden');
     } else {
+        drawer.classList.remove('open');
         drawer.classList.remove('active');
         overlay.classList.add('hidden');
     }
