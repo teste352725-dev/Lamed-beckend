@@ -225,13 +225,7 @@ function setActiveCategoryBtn(cat) {
     btns.forEach(b => {
         const c = b.getAttribute('data-cat');
         const active = (c === cat);
-        const circle = b.querySelector('div');
-        if (circle) {
-            circle.classList.toggle('ring-2', active);
-            circle.classList.toggle('ring-[#d4af37]', active);
-            circle.classList.toggle('ring-offset-2', active);
-            circle.classList.toggle('ring-offset-[#fdfcf9]', active);
-        }
+        b.classList.toggle('active', active);
     });
 }
 
