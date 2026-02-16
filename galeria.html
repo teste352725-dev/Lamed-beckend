@@ -57,6 +57,8 @@
       }, 'siteLamedStorageAppV2');
     }
     const storage = firebase.storage(storageApp);
+    const storageRoot = storage.refFromURL('gs://site-lamed.firebasestorage.app');
+    console.info('[Storage] bucket em uso:', storage.app.options.storageBucket);
 
     document.addEventListener('DOMContentLoaded', () => {
       requireAdmin({ onAllowed: () => carregarGaleria() });
@@ -85,7 +87,7 @@
       for (const file of files) {
         status.textContent = `Enviando ${file.name}...`;
         const path = `galeria/${Date.now()}_${file.name}`;
-        const ref = storage.ref().child(path);
+        const ref = storageRoot.child(path);
         await ref.put(file);
         const url = await ref.getDownloadURL();
         await db.collection('galeria').add({ url, path, dataUpload: new Date(), nome: file.name });
@@ -97,7 +99,7 @@
 
     window.deletar = async (id, path) => {
       if (!confirm('Apagar imagem?')) return;
-      if (path) await storage.ref().child(path).delete().catch(console.error);
+      if (path) await storageRoot.child(path).delete().catch(console.error);
       await db.collection('galeria').doc(id).delete();
     };
   </script>

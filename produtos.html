@@ -282,6 +282,8 @@
       }, 'siteLamedStorageAppV2');
     }
     const storage = firebase.storage(storageApp);
+    const storageRoot = storage.refFromURL('gs://site-lamed.firebasestorage.app');
+    console.info('[Storage] bucket em uso:', storage.app.options.storageBucket);
 
     let produtos = [];
     let selectedProductImages = [];
@@ -564,7 +566,7 @@
       btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Enviando...';
       btn.disabled = true;
       try {
-        const ref = storage.ref(`produtos/${Date.now()}_${file.name}`);
+        const ref = storageRoot.child(`produtos/${Date.now()}_${file.name}`);
         await ref.put(file);
         selectedProductImages.push(await ref.getDownloadURL());
         atualizarPreviewImagensSelecionadas();

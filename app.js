@@ -38,6 +38,8 @@ try {
 }
 
 const storage = firebase.storage(storageApp);
+const storageRoot = storage.refFromURL('gs://site-lamed.firebasestorage.app');
+console.info('[Storage] bucket em uso:', storage.app.options.storageBucket);
 
 // --- ESTADO GLOBAL ---
 let products = [];
@@ -553,7 +555,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // =======================================================
 window.uploadImagemProduto = async function(file, produtoId) {
     try {
-        const ref = storage.ref(`produtos/${produtoId}/${Date.now()}_${file.name}`);
+        const ref = storageRoot.child(`produtos/${produtoId}/${Date.now()}_${file.name}`);
         const snap = await ref.put(file);
         const url = await snap.ref.getDownloadURL();
         return url;

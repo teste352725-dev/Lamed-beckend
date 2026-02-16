@@ -136,6 +136,8 @@
       }, 'siteLamedStorageAppV2');
     }
     const storage = firebase.storage(storageApp);
+    const storageRoot = storage.refFromURL('gs://site-lamed.firebasestorage.app');
+    console.info('[Storage] bucket em uso:', storage.app.options.storageBucket);
 
     let colecoes = [];
     let currentCollectionId = null;
@@ -290,7 +292,7 @@
       try {
         status.textContent = 'Enviando imagem...';
         status.classList.remove('hidden');
-        const ref = storage.ref().child(path);
+        const ref = storageRoot.child(path);
         await ref.put(file);
         const url = await ref.getDownloadURL();
         document.getElementById('collection-image').value = url;
