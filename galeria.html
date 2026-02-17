@@ -3,29 +3,121 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Galeria | Admin - Seja Profeta</title>
+  <title>Galeria | Painel Administrativo</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+  <style>
+    body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+    .btn-primary { background-color: #643f21; color: white; padding: 8px 16px; border-radius: 8px; }
+    .gallery-item { position: relative; aspect-ratio: 1; overflow: hidden; border-radius: 8px; background: #eee; }
+    .gallery-item img { width: 100%; height: 100%; object-fit: cover; }
+    .del-btn { position: absolute; top: 4px; right: 4px; background: rgba(255,0,0,.7); color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+    .upload-box { border: 2px dashed #cbd5e1; border-radius: 12px; padding: 2rem; text-align: center; background: white; margin-bottom: 1.5rem; }
+  </style>
 </head>
-<body class="bg-[#fdfcf9] min-h-screen">
-  <header class="bg-white border-b border-gray-100 px-4 py-3 flex items-center justify-between">
-    <a href="dashboard.html" class="text-sm text-gray-500 hover:text-[#d4af37]"><i class="fa-solid fa-arrow-left mr-2"></i>Dashboard</a>
-    <button id="logout-btn" class="text-gray-500 hover:text-red-600"><i class="fa-solid fa-arrow-right-from-bracket"></i></button>
-  </header>
-  <main class="max-w-4xl mx-auto p-6">
-    <h1 class="text-2xl font-serif italic text-[#1a110a]">Galeria</h1>
-    <p class="text-gray-500 mt-2">Organize imagens dos produtos da loja.</p>
-    <div class="mt-8 bg-white border border-[#E5E0D8] rounded-xl p-5 text-sm text-gray-600">
-      Página preparada e protegida por login admin. Próximo passo: implementar CRUD específico desta seção.
+<body class="pb-20">
+  <header class="bg-white shadow-sm sticky top-0 z-40 px-4 py-3">
+    <div class="flex items-center gap-3">
+      <a href="dashboard.html" class="text-gray-500"><i class="fa-solid fa-arrow-left"></i></a>
+      <h1 class="text-xl font-bold text-gray-800">Galeria</h1>
     </div>
+  </header>
+
+  <main class="max-w-4xl mx-auto p-4">
+    <div class="upload-box">
+      <i class="fa-solid fa-cloud-arrow-up text-3xl text-gray-300 mb-2"></i>
+      <p class="text-sm text-gray-500 mb-3">Selecione imagens para enviar</p>
+      <input type="file" id="file-input" multiple accept="image/*" class="hidden">
+      <button onclick="document.getElementById('file-input').click()" class="btn-primary w-full sm:w-auto">Escolher Arquivos</button>
+      <div id="upload-status" class="mt-2 text-sm text-blue-600"></div>
+    </div>
+
+    <div id="gallery-grid" class="grid grid-cols-3 sm:grid-cols-4 gap-2"></div>
   </main>
+
   <script src="admin-common.js"></script>
   <script>
-    requireAdmin();
-    document.getElementById('logout-btn').onclick = () => auth.signOut().then(() => window.location.href = 'login-admin.html');
+    const db = window.db;
+    let storageApp;
+    try {
+      storageApp = firebase.app('siteLamedStorageAppV2');
+    } catch (_) {
+      storageApp = firebase.initializeApp({
+        apiKey: "AIzaSyCzB4_YotWCPVh1yaqWkhbB4LypPQYvV4U",
+        authDomain: "site-lamed.firebaseapp.com",
+        projectId: "site-lamed",
+        storageBucket: "site-lamed.firebasestorage.app",
+        messagingSenderId: "862756160215",
+        appId: "1:862756160215:web:d0fded233682bf93eaa692"
+      }, 'siteLamedStorageAppV2');
+    }
+    const storage = firebase.storage(storageApp);
+    const storageRoot = storage.refFromURL('gs://site-lamed.firebasestorage.app');
+const storageAuth = firebase.auth(storageApp);
+storageAuth.onAuthStateChanged(async (user) => {
+      if (!user) {
+        try { await storageAuth.signInAnonymously(); }
+        catch (err) { console.error('[StorageAuth] Falha no login anônimo:', err); }
+      }
+    });
+    console.info('[Storage] bucket em uso:', storage.app.options.storageBucket);
+
+    async function ensureStorageAuth() {
+      if (storageAuth.currentUser) return;
+      await storageAuth.signInAnonymously();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      requireAdmin({ onAllowed: () => carregarGaleria() });
+      document.getElementById('file-input').addEventListener('change', uploadImages);
+    });
+
+    function carregarGaleria() {
+      db.collection('galeria').orderBy('dataUpload', 'desc').onSnapshot((snap) => {
+        const grid = document.getElementById('gallery-grid');
+        grid.innerHTML = '';
+        snap.forEach((doc) => {
+          const img = doc.data();
+          grid.innerHTML += `
+            <div class="gallery-item">
+              <img src="${img.url}" loading="lazy">
+              <button class="del-btn" onclick="deletar('${doc.id}', '${img.path || ''}')"><i class="fa-solid fa-times text-xs"></i></button>
+            </div>`;
+        });
+      });
+    }
+
+    async function uploadImages(e) {
+      const files = e.target.files;
+      const status = document.getElementById('upload-status');
+      if (!files || files.length === 0) return;
+      for (const file of files) {
+        status.textContent = `Enviando ${file.name}...`;
+        const path = `galeria/${Date.now()}_${file.name}`;
+        await ensureStorageAuth();
+        const ref = storageRoot.child(path);
+        await ref.put(file);
+        const url = await ref.getDownloadURL();
+        await db.collection('galeria').add({ url, path, dataUpload: new Date(), nome: file.name });
+      }
+      status.textContent = 'Concluído!';
+      setTimeout(() => { status.textContent = ''; }, 2000);
+      e.target.value = '';
+    }
+
+    window.deletar = async (id, path) => {
+      if (!confirm('Apagar imagem?')) return;
+      if (path) {
+        await ensureStorageAuth();
+        await storageRoot.child(path).delete().catch(console.error);
+      }
+      await db.collection('galeria').doc(id).delete();
+    };
   </script>
 </body>
 </html>

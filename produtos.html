@@ -3,29 +3,648 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Produtos | Admin - Seja Profeta</title>
+  <title>Produtos | Painel Administrativo</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+
+  <style>
+    :root { --cor-marrom-cta: #643f21; --cor-ouro-acento: #A58A5C; }
+    body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+    .card { background: white; border-radius: .75rem; border: 1px solid #e2e8f0; transition: all .2s; overflow: hidden; }
+    .card:active { transform: scale(.98); }
+    .btn { padding: .5rem 1rem; border-radius: .5rem; font-weight: 500; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: .2s; }
+    .btn-primary { background: var(--cor-marrom-cta); color: white; }
+    .btn-primary:hover { background: #4a2e18; }
+    .btn-secondary { background: #e5e7eb; color: #374151; }
+    .btn-danger { background: #fee2e2; color: #991b1b; }
+    .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); align-items: center; justify-content: center; z-index: 50; }
+    .modal.visivel { display: flex; }
+    .modal-content { background: white; width: 100%; height: 100%; display: flex; flex-direction: column; }
+    @media (min-width: 768px) { .modal-content { width: 800px; height: auto; max-height: 90vh; border-radius: 1rem; } }
+    .tab-button { transition: all .2s; }
+    .tab-button:hover { color: var(--cor-marrom-cta); }
+    .tab-panel.hidden { display: none; }
+    .status-badge { padding: 2px 8px; border-radius: 99px; font-size: .75rem; font-weight: 600; text-transform: uppercase; }
+    .status-active { color: #047857; background: #d1fae5; }
+    .status-inactive { color: #b91c1c; background: #fee2e2; }
+    .color-preview { width: 24px; height: 24px; border-radius: 50%; border: 1px solid #e5e7eb; }
+    .imagem-preview { position: relative; border-radius: 8px; overflow: hidden; border: 1px solid #e5e7eb; }
+    .gallery-picker-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
+    .gallery-picker-item { aspect-ratio: 1; position: relative; cursor: pointer; border-radius: 8px; overflow: hidden; border: 2px solid transparent; }
+    .gallery-picker-item:hover { border-color: var(--cor-ouro-acento); }
+    .gallery-picker-item img { width: 100%; height: 100%; object-fit: cover; }
+  </style>
 </head>
-<body class="bg-[#fdfcf9] min-h-screen">
-  <header class="bg-white border-b border-gray-100 px-4 py-3 flex items-center justify-between">
-    <a href="dashboard.html" class="text-sm text-gray-500 hover:text-[#d4af37]"><i class="fa-solid fa-arrow-left mr-2"></i>Dashboard</a>
-    <button id="logout-btn" class="text-gray-500 hover:text-red-600"><i class="fa-solid fa-arrow-right-from-bracket"></i></button>
+<body class="pb-20 min-h-screen">
+  <header class="bg-white shadow-md sticky top-0 z-40 px-4 py-3 flex justify-between items-center">
+    <div class="flex items-center gap-3">
+      <a href="dashboard.html" class="text-gray-600 text-xl"><i class="fa-solid fa-arrow-left"></i></a>
+      <h1 class="text-2xl font-semibold text-gray-800">Produtos</h1>
+    </div>
+    <button onclick="abrirModalProduto()" class="btn btn-primary text-sm shadow-lg">
+      <i class="fa-solid fa-plus mr-2"></i><span class="hidden sm:inline">Novo</span>
+    </button>
   </header>
-  <main class="max-w-4xl mx-auto p-6">
-    <h1 class="text-2xl font-serif italic text-[#1a110a]">Produtos</h1>
-    <p class="text-gray-500 mt-2">Gerencie velas, kits e peças únicas.</p>
-    <div class="mt-8 bg-white border border-[#E5E0D8] rounded-xl p-5 text-sm text-gray-600">
-      Página preparada e protegida por login admin. Próximo passo: implementar CRUD específico desta seção.
+
+  <main class="max-w-7xl mx-auto p-4">
+    <div class="bg-white p-3 rounded-lg shadow-sm border border-gray-100 mb-6">
+      <div class="flex flex-col sm:flex-row gap-3">
+        <div class="relative flex-grow">
+          <i class="fa-solid fa-search absolute left-3 top-3 text-gray-400"></i>
+          <input type="text" id="search-input" placeholder="Buscar produto..." class="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-[--cor-ouro-acento]">
+        </div>
+        <select id="filter-category" class="w-full sm:w-auto border border-gray-200 rounded-lg px-3 py-2 bg-white text-sm focus:outline-none focus:border-[--cor-ouro-acento]">
+          <option value="all">Todas as Categorias</option>
+          <option value="combo">Combos / Kits</option>
+          <option value="vestido">Vestidos</option>
+          <option value="conjunto">Conjuntos</option>
+          <option value="calca">Calças</option>
+          <option value="camisa">Camisas</option>
+          <option value="saia">Saias</option>
+          <option value="mesa_posta">Mesa Posta (Geral)</option>
+          <option value="lugar_americano">Lugar Americano</option>
+          <option value="guardanapo">Guardanapo</option>
+          <option value="caminho_mesa">Caminho de Mesa</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="loading-state" class="text-center py-12">
+      <div class="w-8 h-8 border-4 border-gray-200 border-t-[--cor-ouro-acento] rounded-full animate-spin mx-auto mb-2"></div>
+      <p class="text-gray-500 text-sm">Carregando produtos...</p>
+    </div>
+
+    <div id="products-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"></div>
+
+    <div id="empty-state" class="hidden text-center py-12">
+      <i class="fa-solid fa-box-open text-4xl text-gray-300 mb-3"></i>
+      <p class="text-gray-500">Nenhum produto encontrado.</p>
     </div>
   </main>
+
+  <div id="product-modal" class="modal">
+    <div class="modal-content">
+      <div class="flex justify-between items-center p-4 border-b bg-white">
+        <h2 id="modal-title" class="text-2xl font-semibold text-gray-800">Novo Produto</h2>
+        <button onclick="fecharModalProduto()" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
+      </div>
+
+      <form id="product-form" class="flex-1 overflow-y-auto flex flex-col">
+        <input type="hidden" id="product-id">
+
+        <div class="border-b border-gray-200 bg-white px-4">
+          <nav class="flex gap-6 overflow-x-auto">
+            <button type="button" class="tab-button py-3 border-b-2 border-[--cor-marrom-cta] font-medium text-sm text-[--cor-marrom-cta] whitespace-nowrap" data-tab="basic">Informações Básicas</button>
+            <button type="button" id="tab-btn-colors" class="tab-button py-3 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 whitespace-nowrap" data-tab="colors">Cores e Estoque</button>
+            <button type="button" id="tab-btn-combo" class="tab-button hidden py-3 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 whitespace-nowrap" data-tab="combo">Montar Combo</button>
+            <button type="button" class="tab-button py-3 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 whitespace-nowrap" data-tab="images">Imagens</button>
+          </nav>
+        </div>
+
+        <div id="tab-content" class="flex-1 p-4 bg-gray-50 overflow-y-auto">
+          <div id="tab-basic" class="tab-panel active space-y-6">
+            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+              <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Tipo de Produto</label>
+              <select id="product-type" class="w-full border border-gray-300 rounded-md p-2 bg-white font-medium" onchange="toggleProductType()">
+                <option value="standard">Produto Padrão (Peça Única)</option>
+                <option value="combo">Combo / Kit (Conjunto de Peças)</option>
+              </select>
+              <p class="text-xs text-gray-400 mt-1" id="type-description">Produto físico com controle de estoque direto.</p>
+            </div>
+
+            <div class="grid grid-cols-1 gap-6">
+              <div>
+                <label for="product-name" class="block text-sm font-medium text-gray-700 mb-2">Nome *</label>
+                <input type="text" id="product-name" required class="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:border-[--cor-ouro-acento]">
+              </div>
+
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label for="product-price" class="block text-sm font-medium text-gray-700 mb-2">Preço (R$) *</label>
+                  <input type="number" step="0.01" id="product-price" required class="w-full border border-gray-300 rounded-md p-2">
+                </div>
+                <div>
+                  <label for="product-discount" class="block text-sm font-medium text-gray-700 mb-2">Desconto (%)</label>
+                  <input type="number" id="product-discount" class="w-full border border-gray-300 rounded-md p-2" placeholder="0">
+                </div>
+              </div>
+              <div id="price-preview" class="text-sm text-green-600 font-medium -mt-4"></div>
+
+              <div>
+                <label for="product-category" class="block text-sm font-medium text-gray-700 mb-2">Categoria Principal *</label>
+                <select id="product-category" required class="w-full border border-gray-300 rounded-md p-2 bg-white">
+                  <optgroup label="Alfaiataria">
+                    <option value="vestido">Vestido</option>
+                    <option value="conjunto">Conjunto</option>
+                    <option value="calca">Calça</option>
+                    <option value="camisa">Camisa</option>
+                    <option value="saia">Saia</option>
+                  </optgroup>
+                  <optgroup label="Mesa Posta & Casa">
+                    <option value="mesa_posta">Mesa Posta (Geral)</option>
+                    <option value="lugar_americano">Lugar Americano</option>
+                    <option value="guardanapo">Guardanapo</option>
+                    <option value="caminho_mesa">Caminho de Mesa</option>
+                    <option value="porta_guardanapo">Porta Guardanapo</option>
+                  </optgroup>
+                  <option value="outros">Outros</option>
+                </select>
+              </div>
+
+              <div>
+                <label for="product-collection" class="block text-sm font-medium text-gray-700 mb-2">Coleção</label>
+                <select id="product-collection" class="w-full border border-gray-300 rounded-md p-2 bg-white"><option value="">Sem coleção</option></select>
+              </div>
+
+              <div>
+                <label for="product-description" class="block text-sm font-medium text-gray-700 mb-2">Descrição</label>
+                <textarea id="product-description" rows="3" class="w-full border border-gray-300 rounded-md p-2"></textarea>
+              </div>
+
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label for="product-status" class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                  <select id="product-status" class="w-full border border-gray-300 rounded-md p-2 bg-white">
+                    <option value="active">Ativo</option>
+                    <option value="inactive">Inativo</option>
+                  </select>
+                </div>
+                <div>
+                  <label for="product-order" class="block text-sm font-medium text-gray-700 mb-2">Ordem</label>
+                  <input type="number" id="product-order" value="0" class="w-full border border-gray-300 rounded-md p-2">
+                </div>
+              </div>
+              <div>
+                <label for="product-tags" class="block text-sm font-medium text-gray-700 mb-2">Tags</label>
+                <input type="text" id="product-tags" class="w-full border border-gray-300 rounded-md p-2" placeholder="Separadas por vírgula">
+              </div>
+            </div>
+          </div>
+
+          <div id="tab-colors" class="tab-panel hidden space-y-6">
+            <div class="bg-white p-4 rounded-lg border border-gray-200">
+              <h4 class="font-medium text-gray-800 mb-4">Adicionar Nova Cor</h4>
+              <div class="grid grid-cols-1 gap-4">
+                <div class="flex gap-2 items-center">
+                  <input type="color" id="new-color-hex-text" class="h-10 w-12 border rounded cursor-pointer p-0 bg-transparent">
+                  <input type="text" id="new-color-name" placeholder="Nome da Cor (Ex: Azul)" class="w-full border border-gray-300 rounded-md p-2">
+                </div>
+                <div class="flex gap-2">
+                  <input type="number" id="new-color-quantity" placeholder="Qtd" class="w-24 border border-gray-300 rounded-md p-2">
+                  <button type="button" onclick="adicionarCor()" class="btn btn-primary flex-1"><i class="fa-solid fa-plus mr-2"></i>Adicionar</button>
+                </div>
+              </div>
+            </div>
+            <div id="colors-list" class="space-y-3"></div>
+          </div>
+
+          <div id="tab-combo" class="tab-panel hidden space-y-4">
+            <div class="bg-purple-50 p-4 rounded-lg border border-purple-100 text-sm text-purple-800"><i class="fa-solid fa-layer-group mr-2"></i><strong>Montando um Combo:</strong> Adicione as peças que compõem este combo.</div>
+            <div class="bg-white p-4 rounded-lg border border-gray-200">
+              <h4 class="font-medium text-gray-800 mb-2">Buscar Peça para Adicionar</h4>
+              <div class="flex gap-2 relative">
+                <input type="text" id="search-component" placeholder="Digite o nome da peça..." class="w-full border border-gray-300 rounded-md p-2 text-sm" oninput="buscarComponentes(this.value)">
+                <div id="component-search-results" class="absolute top-full left-0 w-full bg-white border border-gray-200 shadow-lg rounded-md mt-1 max-h-48 overflow-y-auto hidden z-20"></div>
+              </div>
+            </div>
+            <h4 class="font-medium text-gray-800 mt-4 flex justify-between items-center">Itens no Combo <span id="combo-items-count" class="text-xs bg-gray-200 px-2 py-1 rounded-full text-gray-600">0</span></h4>
+            <div id="combo-components-list" class="space-y-3"><p class="text-gray-400 text-sm text-center py-8 border-2 border-dashed rounded-lg bg-gray-50">Nenhum item adicionado ao combo.</p></div>
+          </div>
+
+          <div id="tab-images" class="tab-panel hidden space-y-6">
+            <div class="bg-white p-4 rounded-lg border border-gray-200">
+              <div class="grid grid-cols-2 gap-3 mb-4">
+                <button type="button" onclick="document.getElementById('file-upload').click()" class="btn btn-secondary flex flex-col items-center py-4 gap-2 border-2 border-dashed border-gray-300 h-full">
+                  <i class="fa-solid fa-cloud-arrow-up text-2xl text-[--cor-ouro-acento]"></i><span class="text-xs font-medium">Fazer Upload</span>
+                  <input type="file" id="file-upload" accept="image/*" class="hidden" onchange="handleFileUpload(this)">
+                </button>
+                <button type="button" onclick="abrirSeletorGaleria()" class="btn btn-secondary flex flex-col items-center py-4 gap-2 border-2 border-dashed border-gray-300 h-full">
+                  <i class="fa-solid fa-images text-2xl text-[--cor-ouro-acento]"></i><span class="text-xs font-medium">Da Galeria</span>
+                </button>
+              </div>
+              <div class="pt-4 border-t border-gray-100">
+                <label class="text-xs text-gray-500 mb-2 block">Ou cole um link direto:</label>
+                <div class="flex gap-2">
+                  <input type="url" id="new-image-url" placeholder="https://..." class="w-full border border-gray-300 rounded-md p-2 text-sm">
+                  <button type="button" onclick="adicionarImagemUrl()" class="btn btn-secondary px-3"><i class="fa-solid fa-plus"></i></button>
+                </div>
+              </div>
+            </div>
+            <div id="selected-images-preview" class="grid grid-cols-3 gap-3"></div>
+            <p class="text-xs text-center text-gray-500">A primeira imagem será a capa.</p>
+          </div>
+        </div>
+
+        <div class="flex justify-between items-center p-4 bg-white border-t mt-auto z-10 shadow-inner">
+          <button type="button" id="delete-product-btn" onclick="deletarProduto()" class="btn-danger px-4 py-2 hidden rounded-md font-medium text-sm"><i class="fa-solid fa-trash mr-2"></i>Excluir</button>
+          <div class="flex gap-4 ml-auto">
+            <button type="button" onclick="fecharModalProduto()" class="btn-secondary px-4 py-2 rounded-md font-medium text-sm">Cancelar</button>
+            <button type="submit" id="save-product-btn" onclick="salvarProduto(event)" class="btn-primary px-6 py-2 rounded-md font-medium text-sm flex items-center"><i class="fa-solid fa-save mr-2"></i>Salvar</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="gallery-picker-modal" class="modal" style="z-index: 60;">
+    <div class="modal-content" style="max-width: 500px; height: 80vh;">
+      <div class="flex justify-between items-center p-4 border-b bg-white">
+        <h3 class="text-lg font-semibold">Selecionar da Galeria</h3>
+        <button onclick="fecharSeletorGaleria()" class="text-gray-500 text-2xl">&times;</button>
+      </div>
+      <div class="flex-1 overflow-y-auto p-4 bg-gray-50"><div id="gallery-picker-grid" class="gallery-picker-grid"></div></div>
+    </div>
+  </div>
+
+  <div id="toast" class="hidden fixed bottom-4 right-4 bg-gray-800 text-white px-4 py-3 rounded shadow-lg z-[70]"><span id="toast-message"></span></div>
+
   <script src="admin-common.js"></script>
   <script>
-    requireAdmin();
-    document.getElementById('logout-btn').onclick = () => auth.signOut().then(() => window.location.href = 'login-admin.html');
+    const db = window.db;
+    const auth = window.auth;
+    let storageApp;
+    try {
+      storageApp = firebase.app('siteLamedStorageAppV2');
+    } catch (_) {
+      storageApp = firebase.initializeApp({
+        apiKey: "AIzaSyCzB4_YotWCPVh1yaqWkhbB4LypPQYvV4U",
+        authDomain: "site-lamed.firebaseapp.com",
+        projectId: "site-lamed",
+        storageBucket: "site-lamed.firebasestorage.app",
+        messagingSenderId: "862756160215",
+        appId: "1:862756160215:web:d0fded233682bf93eaa692"
+      }, 'siteLamedStorageAppV2');
+    }
+    const storage = firebase.storage(storageApp);
+    const storageRoot = storage.refFromURL('gs://site-lamed.firebasestorage.app');
+const storageAuth = firebase.auth(storageApp);
+storageAuth.onAuthStateChanged(async (user) => {
+      if (!user) {
+        try { await storageAuth.signInAnonymously(); }
+        catch (err) { console.error('[StorageAuth] Falha no login anônimo:', err); }
+      }
+    });
+    console.info('[Storage] bucket em uso:', storage.app.options.storageBucket);
+
+    async function ensureStorageAuth() {
+      if (storageAuth.currentUser) return;
+      await storageAuth.signInAnonymously();
+    }
+
+    let produtos = [];
+    let selectedProductImages = [];
+    let productColors = [];
+    let comboComponents = [];
+    let collectionsMap = {};
+
+    const elementos = {
+      productModal: document.getElementById('product-modal'),
+      galleryModal: document.getElementById('gallery-picker-modal')
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+      requireAdmin({ onAllowed: () => { carregarColecoes(); carregarDados(); } });
+      document.querySelectorAll('.tab-button').forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
+      document.getElementById('product-price').addEventListener('input', atualizarPreviewPreco);
+      document.getElementById('product-discount').addEventListener('input', atualizarPreviewPreco);
+      document.getElementById('search-input').addEventListener('input', filtrarProdutos);
+      document.getElementById('filter-category').addEventListener('change', filtrarProdutos);
+    });
+
+    async function carregarColecoes() {
+      const snap = await db.collection('colecoes').get();
+      const select = document.getElementById('product-collection');
+      select.innerHTML = '<option value="">Sem coleção</option>';
+      snap.forEach(doc => {
+        const c = doc.data();
+        collectionsMap[doc.id] = c.nome;
+        select.innerHTML += `<option value="${doc.id}">${c.nome}</option>`;
+      });
+    }
+
+    function carregarDados() {
+      db.collection('pecas').orderBy('createdAt', 'desc').onSnapshot(snap => {
+        produtos = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        renderizarGrid(produtos);
+        document.getElementById('loading-state').style.display = 'none';
+      });
+    }
+
+    function renderizarGrid(lista) {
+      const grid = document.getElementById('products-grid');
+      const empty = document.getElementById('empty-state');
+      grid.innerHTML = '';
+      if (lista.length === 0) { empty.classList.remove('hidden'); return; }
+      empty.classList.add('hidden');
+      lista.forEach(p => {
+        const img = (p.imagens && p.imagens[0]) ? p.imagens[0] : 'https://placehold.co/300x400/eee/ccc?text=Sem+Imagem';
+        const badgeEstoque = p.tipo === 'combo'
+          ? '<span class="text-xs bg-purple-600 text-white px-2 py-1 rounded font-bold shadow-sm">COMBO</span>'
+          : `<span class="text-xs bg-white/90 px-2 py-1 rounded font-bold shadow-sm text-gray-700">${(p.cores || []).reduce((acc, c) => acc + (parseInt(c.quantidade) || 0), 0)} un.</span>`;
+        const colName = p.colecaoId ? (collectionsMap[p.colecaoId] || 'Geral') : 'Geral';
+        const catFormatada = p.categoria ? p.categoria.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'Sem Categoria';
+        grid.innerHTML += `
+          <div class="card cursor-pointer group" onclick="abrirModalProduto('${p.id}')">
+            <div class="relative h-48 bg-gray-50 border-b border-gray-100 overflow-hidden">
+              <img src="${img}" class="w-full h-full object-cover">
+              <div class="absolute top-2 right-2">${badgeEstoque}</div>
+              <div class="absolute top-2 left-2"><span class="status-badge ${p.status === 'active' ? 'status-active' : 'status-inactive'}">${p.status === 'active' ? 'Ativo' : 'Inativo'}</span></div>
+            </div>
+            <div class="p-4 flex-1 flex flex-col">
+              <div class="mb-1">
+                <h3 class="font-semibold text-gray-800 text-base truncate">${p.nome}</h3>
+                <p class="text-xs text-gray-500 capitalize">${catFormatada} • ${colName}</p>
+              </div>
+              <div class="flex justify-between items-end mt-auto pt-3 border-t border-gray-50"><span class="font-bold text-[--cor-marrom-cta] text-lg">R$ ${p.preco}</span></div>
+            </div>
+          </div>`;
+      });
+    }
+
+    function filtrarProdutos() {
+      const termo = document.getElementById('search-input').value.toLowerCase();
+      const cat = document.getElementById('filter-category').value;
+      const filtrados = produtos.filter(p => p.nome.toLowerCase().includes(termo) && (cat === 'all' || (cat === 'combo' ? p.tipo === 'combo' : p.categoria === cat)));
+      renderizarGrid(filtrados);
+    }
+
+    window.toggleProductType = () => {
+      const type = document.getElementById('product-type').value;
+      const tabBtnCombo = document.getElementById('tab-btn-combo');
+      const tabBtnColors = document.getElementById('tab-btn-colors');
+      const desc = document.getElementById('type-description');
+      if (type === 'combo') {
+        tabBtnCombo.classList.remove('hidden');
+        tabBtnColors.classList.add('hidden');
+        desc.textContent = 'Agrupamento de produtos existentes. O cliente monta o combo.';
+      } else {
+        tabBtnCombo.classList.add('hidden');
+        tabBtnColors.classList.remove('hidden');
+        desc.textContent = 'Produto físico com controle de estoque direto.';
+      }
+    };
+
+    window.buscarComponentes = termo => {
+      const resultsDiv = document.getElementById('component-search-results');
+      if (termo.length < 2) { resultsDiv.classList.add('hidden'); return; }
+      const matches = produtos.filter(p => p.tipo !== 'combo' && p.nome.toLowerCase().includes(termo.toLowerCase()));
+      resultsDiv.innerHTML = '';
+      if (matches.length === 0) resultsDiv.innerHTML = '<div class="p-2 text-xs text-gray-500">Nada encontrado.</div>';
+      matches.forEach(p => {
+        const div = document.createElement('div');
+        div.className = 'flex items-center gap-2 p-2 hover:bg-gray-100 cursor-pointer text-sm border-b border-gray-100 last:border-0';
+        div.innerHTML = `<img src="${p.imagens?.[0] || 'https://placehold.co/50'}" class="w-8 h-8 rounded object-cover"><div><div class="font-medium">${p.nome}</div><div class="text-xs text-gray-500">${p.categoria}</div></div>`;
+        div.onclick = () => adicionarComponente(p);
+        resultsDiv.appendChild(div);
+      });
+      resultsDiv.classList.remove('hidden');
+    };
+
+    window.adicionarComponente = produto => {
+      const existing = comboComponents.find(c => c.id === produto.id);
+      if (existing) existing.quantidade++;
+      else {
+        comboComponents.push({ id: produto.id, nome: produto.nome, categoria: produto.categoria, imagem: produto.imagens?.[0] || null, quantidade: 1 });
+        if (produto.imagens?.[0] && !selectedProductImages.includes(produto.imagens[0])) {
+          selectedProductImages.push(produto.imagens[0]);
+          atualizarPreviewImagensSelecionadas();
+        }
+      }
+      document.getElementById('search-component').value = '';
+      document.getElementById('component-search-results').classList.add('hidden');
+      renderizarComponentesCombo();
+    };
+
+    function renderizarComponentesCombo() {
+      const list = document.getElementById('combo-components-list');
+      const countBadge = document.getElementById('combo-items-count');
+      countBadge.textContent = comboComponents.reduce((acc, c) => acc + c.quantidade, 0);
+      if (comboComponents.length === 0) {
+        list.innerHTML = '<p class="text-gray-400 text-sm text-center py-8 border-2 border-dashed rounded-lg bg-gray-50">Nenhum item adicionado ao combo.</p>';
+        return;
+      }
+      list.innerHTML = comboComponents.map((comp, idx) => `
+        <div class="flex justify-between items-center bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
+          <div class="flex items-center gap-3 flex-1">
+            ${comp.imagem ? `<img src="${comp.imagem}" class="w-10 h-10 rounded object-cover border border-gray-100">` : '<div class="w-10 h-10 bg-gray-100 rounded flex items-center justify-center"><i class="fa-solid fa-shirt text-gray-300"></i></div>'}
+            <div><span class="font-medium text-gray-800 text-sm block">${comp.nome}</span><span class="text-[10px] text-gray-400 font-bold bg-gray-100 px-1.5 py-0.5 rounded">${(comp.categoria || '-').replace('_', ' ').toUpperCase()}</span></div>
+          </div>
+          <div class="flex items-center gap-3 border-l pl-3 ml-3 border-gray-100">
+            <div class="flex items-center bg-gray-50 border border-gray-200 rounded-md">
+              <button type="button" class="px-2 py-1" onclick="alterarQtdComponente(${idx}, -1)">-</button>
+              <span class="px-2 text-xs font-bold w-6 text-center">${comp.quantidade}</span>
+              <button type="button" class="px-2 py-1" onclick="alterarQtdComponente(${idx}, 1)">+</button>
+            </div>
+            <button type="button" onclick="removerComponente(${idx})" class="text-red-400 hover:text-red-600 w-8 h-8 flex items-center justify-center rounded-full hover:bg-red-50"><i class="fa-solid fa-trash"></i></button>
+          </div>
+        </div>`).join('');
+    }
+
+    window.alterarQtdComponente = (idx, delta) => {
+      const novaQtd = comboComponents[idx].quantidade + delta;
+      if (novaQtd >= 1) { comboComponents[idx].quantidade = novaQtd; renderizarComponentesCombo(); }
+    };
+    window.removerComponente = idx => { comboComponents.splice(idx, 1); renderizarComponentesCombo(); };
+
+    window.abrirModalProduto = (productId = null) => {
+      resetModalProduto();
+      if (productId) {
+        preencherFormularioProduto(produtos.find(p => p.id === productId));
+        document.getElementById('modal-title').textContent = 'Editar Produto';
+        document.getElementById('delete-product-btn').classList.remove('hidden');
+      } else {
+        document.getElementById('modal-title').textContent = 'Novo Produto';
+        document.getElementById('delete-product-btn').classList.add('hidden');
+      }
+      elementos.productModal.classList.add('visivel');
+      switchTab('basic');
+      toggleProductType();
+    };
+    window.fecharModalProduto = () => elementos.productModal.classList.remove('visivel');
+
+    function resetModalProduto() {
+      document.getElementById('product-form').reset();
+      document.getElementById('product-id').value = '';
+      document.getElementById('product-type').value = 'standard';
+      selectedProductImages = [];
+      productColors = [];
+      comboComponents = [];
+      atualizarPreviewImagensSelecionadas();
+      atualizarListaCores();
+      renderizarComponentesCombo();
+      atualizarPreviewPreco();
+    }
+
+    function preencherFormularioProduto(produto) {
+      document.getElementById('product-id').value = produto.id;
+      document.getElementById('product-name').value = produto.nome;
+      document.getElementById('product-price').value = produto.preco;
+      document.getElementById('product-discount').value = produto.desconto || 0;
+      document.getElementById('product-description').value = produto.descricao || '';
+      document.getElementById('product-category').value = produto.categoria;
+      document.getElementById('product-type').value = produto.tipo || (produto.categoria === 'combo' ? 'combo' : 'standard');
+      document.getElementById('product-status').value = produto.status || 'active';
+      document.getElementById('product-tags').value = produto.tags || '';
+      document.getElementById('product-order').value = produto.ordem || 0;
+      if (produto.colecaoId) document.getElementById('product-collection').value = produto.colecaoId;
+      selectedProductImages = [...(produto.imagens || [])];
+      productColors = [...(produto.cores || [])];
+      comboComponents = [...(produto.componentes || [])];
+      atualizarPreviewImagensSelecionadas();
+      atualizarListaCores();
+      renderizarComponentesCombo();
+      atualizarPreviewPreco();
+    }
+
+    window.salvarProduto = async event => {
+      event.preventDefault();
+      const id = document.getElementById('product-id').value;
+      const nome = document.getElementById('product-name').value.trim();
+      const preco = parseFloat(document.getElementById('product-price').value);
+      const categoria = document.getElementById('product-category').value;
+      const tipo = document.getElementById('product-type').value;
+      if (!nome || Number.isNaN(preco)) { alert('Preencha nome e preço.'); return; }
+      if (tipo === 'combo' && comboComponents.length === 0) { alert('Um Combo precisa ter pelo menos 1 peça adicionada.'); switchTab('combo'); return; }
+      const data = {
+        nome, preco, categoria, tipo,
+        desconto: parseInt(document.getElementById('product-discount').value) || 0,
+        descricao: document.getElementById('product-description').value.trim(),
+        status: document.getElementById('product-status').value,
+        ordem: parseInt(document.getElementById('product-order').value) || 0,
+        tags: document.getElementById('product-tags').value,
+        colecaoId: document.getElementById('product-collection').value || null,
+        imagens: selectedProductImages,
+        cores: tipo === 'standard' ? productColors : [],
+        componentes: tipo === 'combo' ? comboComponents : [],
+        updatedAt: new Date()
+      };
+      const btn = document.getElementById('save-product-btn');
+      try {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Salvando...';
+        if (id) { await db.collection('pecas').doc(id).update(data); mostrarToast('Produto atualizado!'); }
+        else { data.createdAt = new Date(); await db.collection('pecas').add(data); mostrarToast('Produto criado!'); }
+        fecharModalProduto();
+      } catch (e) {
+        alert(`Erro: ${e.message}`);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-save mr-2"></i>Salvar';
+      }
+    };
+
+    window.deletarProduto = async () => {
+      const id = document.getElementById('product-id').value;
+      if (!id || !confirm('Tem certeza?')) return;
+      await db.collection('pecas').doc(id).delete();
+      fecharModalProduto();
+      mostrarToast('Produto excluído.');
+    };
+
+    window.adicionarCor = () => {
+      const nome = document.getElementById('new-color-name').value.trim();
+      const hex = document.getElementById('new-color-hex-text').value.trim();
+      const quantidade = parseInt(document.getElementById('new-color-quantity').value) || 0;
+      if (!nome) { alert('Digite o nome da cor.'); return; }
+      productColors.push({ nome, hex, quantidade });
+      document.getElementById('new-color-name').value = '';
+      document.getElementById('new-color-quantity').value = '';
+      atualizarListaCores();
+    };
+
+    function atualizarListaCores() {
+      const container = document.getElementById('colors-list');
+      if (productColors.length === 0) { container.innerHTML = '<p class="text-center text-gray-400 py-4 text-sm border-2 border-dashed rounded">Sem cores.</p>'; return; }
+      container.innerHTML = productColors.map((cor, i) => `<div class="card p-4 flex justify-between items-center"><div class="flex items-center gap-3"><div class="color-preview" style="background:${cor.hex}"></div><div><div class="font-medium text-sm">${cor.nome}</div><div class="text-xs text-gray-500">Qtd: ${cor.quantidade}</div></div></div><button type="button" onclick="removerCor(${i})" class="text-red-500 hover:text-red-700 p-2"><i class="fa-solid fa-trash"></i></button></div>`).join('');
+    }
+
+    window.removerCor = idx => { if (confirm('Remover cor?')) { productColors.splice(idx, 1); atualizarListaCores(); } };
+    window.adicionarImagemUrl = () => {
+      const url = document.getElementById('new-image-url').value;
+      if (url) { selectedProductImages.push(url); document.getElementById('new-image-url').value = ''; atualizarPreviewImagensSelecionadas(); }
+    };
+
+    window.handleFileUpload = async input => {
+      const file = input.files[0];
+      if (!file) return;
+      const btn = input.parentElement;
+      const originalText = btn.innerHTML;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Enviando...';
+      btn.disabled = true;
+      try {
+        await ensureStorageAuth();
+        const ref = storageRoot.child(`produtos/${Date.now()}_${file.name}`);
+        await ref.put(file);
+        selectedProductImages.push(await ref.getDownloadURL());
+        atualizarPreviewImagensSelecionadas();
+      } catch (e) {
+        alert(`Erro upload: ${e.message}`);
+      } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+        input.value = '';
+      }
+    };
+
+    window.abrirSeletorGaleria = async () => {
+      elementos.galleryModal.classList.add('visivel');
+      const grid = document.getElementById('gallery-picker-grid');
+      grid.innerHTML = '<div class="col-span-3 text-center py-4">Carregando...</div>';
+      const snap = await db.collection('galeria').orderBy('dataUpload', 'desc').limit(20).get();
+      if (snap.empty) { grid.innerHTML = '<p class="col-span-3 text-center text-gray-500">Galeria vazia.</p>'; return; }
+      grid.innerHTML = '';
+      snap.forEach(doc => {
+        const img = doc.data();
+        const item = document.createElement('div');
+        item.className = 'gallery-picker-item';
+        item.innerHTML = `<img src="${img.url}" loading="lazy">`;
+        item.onclick = () => { selectedProductImages.push(img.url); atualizarPreviewImagensSelecionadas(); fecharSeletorGaleria(); };
+        grid.appendChild(item);
+      });
+    };
+    window.fecharSeletorGaleria = () => elementos.galleryModal.classList.remove('visivel');
+
+    function atualizarPreviewImagensSelecionadas() {
+      const container = document.getElementById('selected-images-preview');
+      if (selectedProductImages.length === 0) {
+        container.innerHTML = '<p class="text-gray-500 w-full text-center py-8 text-sm border-2 border-dashed rounded col-span-3">Nenhuma imagem.</p>';
+        return;
+      }
+      container.innerHTML = selectedProductImages.map((url, i) => `<div class="imagem-preview relative aspect-square bg-gray-100" data-index="${i}"><img src="${url}" class="w-full h-full object-cover"><button type="button" onclick="removerImagem(${i})" class="absolute top-1 right-1 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center shadow">×</button>${i === 0 ? '<span class="absolute bottom-0 w-full bg-black/50 text-white text-[10px] text-center">Capa</span>' : ''}</div>`).join('');
+    }
+    window.removerImagem = i => { selectedProductImages.splice(i, 1); atualizarPreviewImagensSelecionadas(); };
+
+    function atualizarPreviewPreco() {
+      const p = parseFloat(document.getElementById('product-price').value) || 0;
+      const d = parseInt(document.getElementById('product-discount').value) || 0;
+      document.getElementById('price-preview').textContent = d > 0 ? `Final: R$ ${(p * (1 - d / 100)).toFixed(2)}` : '';
+    }
+
+    function switchTab(tab) {
+      document.querySelectorAll('.tab-button').forEach(b => {
+        b.classList.remove('border-[--cor-marrom-cta]', 'text-[--cor-marrom-cta]');
+        b.classList.add('border-transparent', 'text-gray-500');
+        if (b.dataset.tab === tab) {
+          b.classList.remove('border-transparent', 'text-gray-500');
+          b.classList.add('border-[--cor-marrom-cta]', 'text-[--cor-marrom-cta]');
+        }
+      });
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+      document.getElementById(`tab-${tab}`).classList.remove('hidden');
+    }
+
+    function mostrarToast(msg) {
+      const t = document.getElementById('toast');
+      document.getElementById('toast-message').textContent = msg;
+      t.classList.remove('hidden');
+      setTimeout(() => t.classList.add('hidden'), 3000);
+    }
   </script>
 </body>
 </html>

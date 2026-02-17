@@ -1,11 +1,25 @@
 {
-  "name": "Seja Profeta | Atelier Ferrugem",
+  "name": "Seja Profeta",
   "short_name": "Seja Profeta",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "background_color": "#fdfcf9",
   "theme_color": "#1a110a",
-  "description": "Loja oficial de velas artesanais e kits do Atelier Ferrugem.",
-  "lang": "pt-BR"
+  "description": "Loja oficial de velas artesanais e kits do Seja Profeta.",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "https://i.supaimg.com/24744ff6-247c-4e17-9e94-6455c96da980/dc727847-25ce-4e3b-97a3-7c26bb9493df.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any"
+    },
+    {
+      "src": "https://i.supaimg.com/24744ff6-247c-4e17-9e94-6455c96da980/dc727847-25ce-4e3b-97a3-7c26bb9493df.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ]
 }
